@@ -1,0 +1,822 @@
+<!-- Chatbot Floating Interface -->
+<div id="chatbot-container" class="chatbot-container">
+    <!-- Chatbot Toggle Button -->
+    <div id="chatbot-toggle" class="chatbot-toggle">
+        <i class="fas fa-comments"></i>
+    </div>
+    
+    <!-- Chatbot Window -->
+    <div id="chatbot-window" class="chatbot-window">
+        <!-- Chatbot Header -->
+        <div class="chatbot-header">
+            <div class="chatbot-title">
+                <i class="fas fa-robot me-2"></i>
+                {{ _('VoyagerKit Assistant') }}
+            </div>
+            <div class="chatbot-close" id="chatbot-close">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        
+        <!-- Chatbot Messages -->
+        <div class="chatbot-messages" id="chatbot-messages">
+            <div class="chatbot-message bot-message">
+                <div class="message-content">
+                    <i class="fas fa-robot me-2"></i>
+                    {{ _('Hello! I\'m your VoyagerKit assistant. How can I help you today?') }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Chatbot Input -->
+        <div class="chatbot-input-container" id="chatbot-input-container">
+            <div class="chatbot-options" id="chatbot-options">
+                <button class="chatbot-option-btn" data-service="hotel">
+                    <i class="fas fa-bed me-2"></i>
+                    {{ _('Hotel Booking') }}
+                </button>
+                <button class="chatbot-option-btn" data-service="vehicle">
+                    <i class="fas fa-car me-2"></i>
+                    {{ _('Vehicle Rental') }}
+                </button>
+                <button class="chatbot-option-btn" data-service="itinerary">
+                    <i class="fas fa-route me-2"></i>
+                    {{ _('Plan Trip') }}
+                </button>
+                <button class="chatbot-option-btn" data-service="food">
+                    <i class="fas fa-utensils me-2"></i>
+                    {{ _('Food Recommendations') }}
+                </button>
+                <button class="chatbot-option-btn" data-service="blog">
+                    <i class="fas fa-blog me-2"></i>
+                    {{ _('Location Blog') }}
+                </button>
+                <button class="chatbot-option-btn" data-service="translator">
+                    <i class="fas fa-language me-2"></i>
+                    {{ _('Language Translator') }}
+                </button>
+            </div>
+            
+            <div class="chatbot-input" id="chatbot-input" style="display: none;">
+                <input type="text" id="chatbot-text-input" placeholder="{{ _('Type your message...') }}" class="form-control">
+                <button id="chatbot-send-btn" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chatbot Styles -->
+<style>
+.chatbot-container {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    z-index: 1000;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.chatbot-toggle {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    color: white;
+    font-size: 24px;
+}
+
+.chatbot-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+}
+
+.chatbot-window {
+    position: absolute;
+    bottom: 80px;
+    left: 0;
+    width: 350px;
+    height: 500px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chatbot-window.active {
+    display: flex;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.chatbot-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.chatbot-title {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.chatbot-close {
+    cursor: pointer;
+    font-size: 18px;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+}
+
+.chatbot-close:hover {
+    opacity: 1;
+}
+
+.chatbot-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.chatbot-message {
+    margin-bottom: 15px;
+    display: flex;
+    align-items: flex-start;
+}
+
+.bot-message {
+    justify-content: flex-start;
+}
+
+.user-message {
+    justify-content: flex-end;
+}
+
+.message-content {
+    max-width: 80%;
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.bot-message .message-content {
+    background: white;
+    color: #333;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.user-message .message-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.chatbot-input-container {
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e9ecef;
+}
+
+.chatbot-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.chatbot-option-btn {
+    padding: 12px 16px;
+    border: 2px solid #e9ecef;
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 13px;
+    text-align: left;
+    color: #333;
+}
+
+.chatbot-option-btn:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(102, 126, 234, 0.2);
+}
+
+.chatbot-option-btn i {
+    color: #667eea;
+}
+
+.chatbot-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.chatbot-input input {
+    flex: 1;
+    border: 2px solid #e9ecef;
+    border-radius: 25px;
+    padding: 10px 15px;
+    font-size: 14px;
+    transition: border-color 0.3s ease;
+}
+
+.chatbot-input input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+.chatbot-input button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.chatbot-input button:hover {
+    transform: scale(1.1);
+}
+
+/* Loading Animation */
+.chatbot-loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .chatbot-window {
+        width: 300px;
+        height: 450px;
+    }
+    
+    .chatbot-options {
+        grid-template-columns: 1fr;
+    }
+    
+    .chatbot-toggle {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chatbot-container {
+        bottom: 10px;
+        left: 10px;
+    }
+    
+    .chatbot-window {
+        width: 280px;
+        height: 400px;
+        bottom: 70px;
+    }
+}
+</style>
+
+<!-- Chatbot JavaScript -->
+<script>
+class TourismChatbot {
+    constructor() {
+        this.currentStep = 'welcome';
+        this.bookingData = {};
+        this.isOpen = false;
+        this.init();
+    }
+    
+    init() {
+        this.bindEvents();
+        this.addMessage('bot', '{{ _("Hello! I\'m your VoyagerKit assistant. How can I help you today?") }}');
+    }
+    
+    bindEvents() {
+        // Toggle chatbot
+        document.getElementById('chatbot-toggle').addEventListener('click', () => {
+            this.toggleChatbot();
+        });
+        
+        // Close chatbot
+        document.getElementById('chatbot-close').addEventListener('click', () => {
+            this.closeChatbot();
+        });
+        
+        // Service option buttons
+        document.querySelectorAll('.chatbot-option-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const service = e.currentTarget.dataset.service;
+                this.handleServiceSelection(service);
+            });
+        });
+        
+        // Send button
+        document.getElementById('chatbot-send-btn').addEventListener('click', () => {
+            this.sendMessage();
+        });
+        
+        // Enter key in input
+        document.getElementById('chatbot-text-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.sendMessage();
+            }
+        });
+    }
+    
+    toggleChatbot() {
+        const window = document.getElementById('chatbot-window');
+        if (this.isOpen) {
+            this.closeChatbot();
+        } else {
+            this.openChatbot();
+        }
+    }
+    
+    openChatbot() {
+        document.getElementById('chatbot-window').classList.add('active');
+        this.isOpen = true;
+    }
+    
+    closeChatbot() {
+        document.getElementById('chatbot-window').classList.remove('active');
+        this.isOpen = false;
+    }
+    
+    addMessage(sender, message, options = {}) {
+        const messagesContainer = document.getElementById('chatbot-messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chatbot-message ${sender}-message`;
+        
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+        
+        if (options.loading) {
+            contentDiv.innerHTML = '<div class="chatbot-loading"></div>';
+        } else if (options.html) {
+            contentDiv.innerHTML = message;
+        } else {
+            contentDiv.textContent = message;
+        }
+        
+        messageDiv.appendChild(contentDiv);
+        messagesContainer.appendChild(messageDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        return messageDiv;
+    }
+    
+    showLoading() {
+        return this.addMessage('bot', '', { loading: true });
+    }
+    
+    hideLoading(loadingElement) {
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+    }
+    
+    handleServiceSelection(service) {
+        this.bookingData = { service: service };
+        
+        switch(service) {
+            case 'hotel':
+                this.startHotelBooking();
+                break;
+            case 'vehicle':
+                this.startVehicleBooking();
+                break;
+            case 'itinerary':
+                window.location.href = '{{ url_for("itinerary_generator") }}';
+                break;
+            case 'food':
+                window.location.href = '{{ url_for("food_recommendations") }}';
+                break;
+            case 'blog':
+                window.location.href = '{{ url_for("location_blog") }}';
+                break;
+            case 'translator':
+                window.location.href = '{{ url_for("translator") }}';
+                break;
+        }
+    }
+    
+    startHotelBooking() {
+        this.currentStep = 'hotel_location';
+        this.addMessage('user', '{{ _("Hotel Booking") }}');
+        this.addMessage('bot', '{{ _("Great! Let\'s find you the perfect hotel. Which city would you like to stay in?") }}');
+        this.showInput();
+    }
+    
+    startVehicleBooking() {
+        this.currentStep = 'vehicle_location';
+        this.addMessage('user', '{{ _("Vehicle Rental") }}');
+        this.addMessage('bot', '{{ _("Perfect! Let\'s find you the right vehicle. Which city would you like to rent from?") }}');
+        this.showInput();
+    }
+    
+    showInput() {
+        document.getElementById('chatbot-options').style.display = 'none';
+        document.getElementById('chatbot-input').style.display = 'flex';
+        document.getElementById('chatbot-text-input').focus();
+    }
+    
+    hideInput() {
+        document.getElementById('chatbot-options').style.display = 'grid';
+        document.getElementById('chatbot-input').style.display = 'none';
+    }
+    
+    sendMessage() {
+        const input = document.getElementById('chatbot-text-input');
+        const message = input.value.trim();
+        
+        if (!message) return;
+        
+        this.addMessage('user', message);
+        input.value = '';
+        
+        this.processMessage(message);
+    }
+    
+    async processMessage(message) {
+        const loading = this.showLoading();
+        
+        try {
+            switch(this.currentStep) {
+                case 'hotel_location':
+                    await this.handleHotelLocation(message);
+                    break;
+                case 'hotel_selection':
+                    await this.handleHotelSelection(message);
+                    break;
+                case 'room_type_selection':
+                    await this.handleRoomTypeSelection(message);
+                    break;
+                case 'guest_count':
+                    await this.handleGuestCount(message);
+                    break;
+                case 'hotel_confirmation':
+                    await this.handleHotelConfirmation(message);
+                    break;
+                case 'vehicle_location':
+                    await this.handleVehicleLocation(message);
+                    break;
+                case 'vehicle_selection':
+                    await this.handleVehicleSelection(message);
+                    break;
+                case 'vehicle_dates':
+                    await this.handleVehicleDates(message);
+                    break;
+                case 'vehicle_confirmation':
+                    await this.handleVehicleConfirmation(message);
+                    break;
+            }
+        } catch (error) {
+            console.error('Chatbot error:', error);
+            this.addMessage('bot', '{{ _("Sorry, something went wrong. Please try again.") }}');
+        } finally {
+            this.hideLoading(loading);
+        }
+    }
+    
+    async handleHotelLocation(location) {
+        this.bookingData.location = location;
+        
+        const response = await fetch(`/api/chatbot/hotels?location=${encodeURIComponent(location)}`);
+        const data = await response.json();
+        
+        if (data.success && data.hotels.length > 0) {
+            this.currentStep = 'hotel_selection';
+            this.bookingData.availableHotels = data.hotels;
+            
+            let message = `{{ _("Found") }} ${data.hotels.length} {{ _("hotels in") }} ${location}. {{ _("Please select one:") }}<br><br>`;
+            data.hotels.forEach((hotel, index) => {
+                message += `<button class="hotel-option" data-hotel-id="${hotel.id}" style="display: block; width: 100%; margin: 5px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: white; cursor: pointer; text-align: left;">
+                    <strong>${hotel.name}</strong><br>
+                    <small>${hotel.address}, ${hotel.city}</small><br>
+                    <small>₹${hotel.price_per_night}/night</small>
+                </button>`;
+            });
+            
+            this.addMessage('bot', message, { html: true });
+            this.bindHotelOptions();
+        } else {
+            this.addMessage('bot', `{{ _("Sorry, no hotels found in") }} ${location}. {{ _("Please try another city.") }}`);
+        }
+    }
+    
+    bindHotelOptions() {
+        document.querySelectorAll('.hotel-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const hotelId = parseInt(e.currentTarget.dataset.hotelId);
+                const hotel = this.bookingData.availableHotels.find(h => h.id === hotelId);
+                this.addMessage('user', hotel.name);
+                this.handleHotelSelection(hotel.name);
+            });
+        });
+    }
+    
+    async handleHotelSelection(hotelName) {
+        const hotel = this.bookingData.availableHotels.find(h => h.name === hotelName);
+        if (!hotel) {
+            this.addMessage('bot', '{{ _("Please select a valid hotel from the list.") }}');
+            return;
+        }
+        
+        this.bookingData.selectedHotel = hotel;
+        
+        const response = await fetch(`/api/chatbot/room-types?hotel_id=${hotel.id}`);
+        const data = await response.json();
+        
+        if (data.success && data.room_types.length > 0) {
+            this.currentStep = 'room_type_selection';
+            this.bookingData.availableRoomTypes = data.room_types;
+            
+            let message = `{{ _("Great choice!") }} ${hotel.name} {{ _("has the following room types:") }}<br><br>`;
+            data.room_types.forEach((roomType, index) => {
+                message += `<button class="room-option" data-room-id="${roomType.id}" style="display: block; width: 100%; margin: 5px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: white; cursor: pointer; text-align: left;">
+                    <strong>${roomType.name}</strong><br>
+                    <small>${roomType.description}</small><br>
+                    <small>₹${roomType.price_per_night}/night • ${roomType.max_occupancy} {{ _("guests") }}</small>
+                </button>`;
+            });
+            
+            this.addMessage('bot', message, { html: true });
+            this.bindRoomOptions();
+        } else {
+            this.addMessage('bot', '{{ _("Sorry, no room types available for this hotel.") }}');
+        }
+    }
+    
+    bindRoomOptions() {
+        document.querySelectorAll('.room-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const roomId = parseInt(e.currentTarget.dataset.roomId);
+                const roomType = this.bookingData.availableRoomTypes.find(r => r.id === roomId);
+                this.addMessage('user', roomType.name);
+                this.handleRoomTypeSelection(roomType.name);
+            });
+        });
+    }
+    
+    handleRoomTypeSelection(roomTypeName) {
+        const roomType = this.bookingData.availableRoomTypes.find(r => r.name === roomTypeName);
+        if (!roomType) {
+            this.addMessage('bot', '{{ _("Please select a valid room type from the list.") }}');
+            return;
+        }
+        
+        this.bookingData.selectedRoomType = roomType;
+        this.currentStep = 'guest_count';
+        
+        this.addMessage('bot', `{{ _("Perfect!") }} ${roomType.name} {{ _("can accommodate up to") }} ${roomType.max_occupancy} {{ _("guests. How many guests will be staying?") }}`);
+    }
+    
+    handleGuestCount(message) {
+        const guestCount = parseInt(message);
+        
+        if (isNaN(guestCount) || guestCount < 1 || guestCount > this.bookingData.selectedRoomType.max_occupancy) {
+            this.addMessage('bot', `{{ _("Please enter a valid number between 1 and") }} ${this.bookingData.selectedRoomType.max_occupancy}.`);
+            return;
+        }
+        
+        this.bookingData.guestCount = guestCount;
+        
+        // Calculate required rooms based on room capacity
+        const roomsNeeded = Math.ceil(guestCount / this.bookingData.selectedRoomType.max_occupancy);
+        this.bookingData.roomsNeeded = roomsNeeded;
+        
+        // Calculate total amount
+        const totalAmount = roomsNeeded * this.bookingData.selectedRoomType.price_per_night;
+        this.bookingData.totalAmount = totalAmount;
+        
+        this.currentStep = 'hotel_confirmation';
+        
+        const confirmationMessage = `
+            <strong>{{ _("Booking Summary:") }}</strong><br><br>
+            <strong>{{ _("Hotel:") }}</strong> ${this.bookingData.selectedHotel.name}<br>
+            <strong>{{ _("Room Type:") }}</strong> ${this.bookingData.selectedRoomType.name}<br>
+            <strong>{{ _("Guests:") }}</strong> ${guestCount}<br>
+            <strong>{{ _("Rooms:") }}</strong> ${roomsNeeded}<br>
+            <strong>{{ _("Price per night:") }}</strong> ₹${this.bookingData.selectedRoomType.price_per_night}<br>
+            <strong>{{ _("Total Amount:") }}</strong> ₹${totalAmount}<br><br>
+            {{ _("Would you like to confirm this booking? (Yes/No)") }}
+        `;
+        
+        this.addMessage('bot', confirmationMessage, { html: true });
+    }
+    
+    async handleHotelConfirmation(message) {
+        if (message.toLowerCase().includes('yes') || message.toLowerCase().includes('confirm')) {
+            // Create booking
+            const bookingData = {
+                hotel_id: this.bookingData.selectedHotel.id,
+                room_type_id: this.bookingData.selectedRoomType.id,
+                guests: this.bookingData.guestCount,
+                rooms: this.bookingData.roomsNeeded,
+                total_amount: this.bookingData.totalAmount
+            };
+            
+            const response = await fetch('/api/chatbot/create-hotel-booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bookingData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.addMessage('bot', `{{ _("🎉 Booking confirmed! Your booking reference is:") }} ${result.booking_reference}. {{ _("Thank you for choosing VoyagerKit!") }}`);
+            } else {
+                this.addMessage('bot', `{{ _("Sorry, booking failed:") }} ${result.error}`);
+            }
+        } else {
+            this.addMessage('bot', '{{ _("Booking cancelled. How else can I help you?") }}');
+        }
+        
+        this.resetChatbot();
+    }
+    
+    async handleVehicleLocation(location) {
+        this.bookingData.location = location;
+        
+        const response = await fetch(`/api/chatbot/vehicles?location=${encodeURIComponent(location)}`);
+        const data = await response.json();
+        
+        if (data.success && data.vehicles.length > 0) {
+            this.currentStep = 'vehicle_selection';
+            this.bookingData.availableVehicles = data.vehicles;
+            
+            let message = `{{ _("Found") }} ${data.vehicles.length} {{ _("vehicles in") }} ${location}. {{ _("Please select one:") }}<br><br>`;
+            data.vehicles.forEach((vehicle, index) => {
+                message += `<button class="vehicle-option" data-vehicle-id="${vehicle.id}" style="display: block; width: 100%; margin: 5px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; background: white; cursor: pointer; text-align: left;">
+                    <strong>${vehicle.make} ${vehicle.model}</strong><br>
+                    <small>${vehicle.vehicle_type} • ${vehicle.transmission} • ${vehicle.fuel_type}</small><br>
+                    <small>₹${vehicle.price_per_day}/day • ${vehicle.seating_capacity} {{ _("seats") }}</small>
+                </button>`;
+            });
+            
+            this.addMessage('bot', message, { html: true });
+            this.bindVehicleOptions();
+        } else {
+            this.addMessage('bot', `{{ _("Sorry, no vehicles found in") }} ${location}. {{ _("Please try another city.") }}`);
+        }
+    }
+    
+    bindVehicleOptions() {
+        document.querySelectorAll('.vehicle-option').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const vehicleId = parseInt(e.currentTarget.dataset.vehicleId);
+                const vehicle = this.bookingData.availableVehicles.find(v => v.id === vehicleId);
+                this.addMessage('user', `${vehicle.make} ${vehicle.model}`);
+                this.handleVehicleSelection(`${vehicle.make} ${vehicle.model}`);
+            });
+        });
+    }
+    
+    handleVehicleSelection(vehicleName) {
+        const vehicle = this.bookingData.availableVehicles.find(v => `${v.make} ${v.model}` === vehicleName);
+        if (!vehicle) {
+            this.addMessage('bot', '{{ _("Please select a valid vehicle from the list.") }}');
+            return;
+        }
+        
+        this.bookingData.selectedVehicle = vehicle;
+        this.currentStep = 'vehicle_dates';
+        
+        this.addMessage('bot', `{{ _("Great choice!") }} ${vehicle.make} ${vehicle.model}. {{ _("Please provide your rental dates in the format:") }}<br><strong>{{ _("Pickup Date (YYYY-MM-DD)") }}</strong><br><strong>{{ _("Return Date (YYYY-MM-DD)") }}</strong><br><br>{{ _("Example:") }} 2024-01-15, 2024-01-18`);
+    }
+    
+    handleVehicleDates(message) {
+        const dates = message.split(',').map(d => d.trim());
+        
+        if (dates.length !== 2) {
+            this.addMessage('bot', '{{ _("Please provide both pickup and return dates in the format: YYYY-MM-DD, YYYY-MM-DD") }}');
+            return;
+        }
+        
+        const pickupDate = new Date(dates[0]);
+        const returnDate = new Date(dates[1]);
+        
+        if (isNaN(pickupDate.getTime()) || isNaN(returnDate.getTime())) {
+            this.addMessage('bot', '{{ _("Please provide valid dates in YYYY-MM-DD format.") }}');
+            return;
+        }
+        
+        if (returnDate <= pickupDate) {
+            this.addMessage('bot', '{{ _("Return date must be after pickup date.") }}');
+            return;
+        }
+        
+        this.bookingData.pickupDate = dates[0];
+        this.bookingData.returnDate = dates[1];
+        
+        // Calculate rental days
+        const rentalDays = Math.ceil((returnDate - pickupDate) / (1000 * 60 * 60 * 24));
+        this.bookingData.rentalDays = rentalDays;
+        
+        // Calculate total amount
+        const totalAmount = rentalDays * this.bookingData.selectedVehicle.price_per_day;
+        this.bookingData.totalAmount = totalAmount;
+        
+        this.currentStep = 'vehicle_confirmation';
+        
+        const confirmationMessage = `
+            <strong>{{ _("Rental Summary:") }}</strong><br><br>
+            <strong>{{ _("Vehicle:") }}</strong> ${this.bookingData.selectedVehicle.make} ${this.bookingData.selectedVehicle.model}<br>
+            <strong>{{ _("Pickup Date:") }}</strong> ${dates[0]}<br>
+            <strong>{{ _("Return Date:") }}</strong> ${dates[1]}<br>
+            <strong>{{ _("Rental Days:") }}</strong> ${rentalDays}<br>
+            <strong>{{ _("Price per day:") }}</strong> ₹${this.bookingData.selectedVehicle.price_per_day}<br>
+            <strong>{{ _("Total Amount:") }}</strong> ₹${totalAmount}<br><br>
+            {{ _("Would you like to confirm this rental? (Yes/No)") }}
+        `;
+        
+        this.addMessage('bot', confirmationMessage, { html: true });
+    }
+    
+    async handleVehicleConfirmation(message) {
+        if (message.toLowerCase().includes('yes') || message.toLowerCase().includes('confirm')) {
+            // Create booking
+            const bookingData = {
+                vehicle_id: this.bookingData.selectedVehicle.id,
+                rental_company_id: this.bookingData.selectedVehicle.rental_company_id,
+                pickup_date: this.bookingData.pickupDate,
+                return_date: this.bookingData.returnDate,
+                total_amount: this.bookingData.totalAmount
+            };
+            
+            const response = await fetch('/api/chatbot/create-vehicle-booking', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(bookingData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                this.addMessage('bot', `{{ _("🎉 Rental confirmed! Your booking reference is:") }} ${result.booking_reference}. {{ _("Thank you for choosing VoyagerKit!") }}`);
+            } else {
+                this.addMessage('bot', `{{ _("Sorry, rental failed:") }} ${result.error}`);
+            }
+        } else {
+            this.addMessage('bot', '{{ _("Rental cancelled. How else can I help you?") }}');
+        }
+        
+        this.resetChatbot();
+    }
+    
+    resetChatbot() {
+        this.currentStep = 'welcome';
+        this.bookingData = {};
+        this.hideInput();
+        
+        setTimeout(() => {
+            this.addMessage('bot', '{{ _("How else can I help you today?") }}');
+        }, 2000);
+    }
+}
+
+// Initialize chatbot when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    window.tourismChatbot = new TourismChatbot();
+});
+</script>

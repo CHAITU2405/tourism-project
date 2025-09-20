@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Hotel Profile - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h2 class="mb-0"><i class="fas fa-edit"></i> Edit Hotel Profile</h2>
+                        <a href="{{ url_for('view_hotel_profile') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-eye me-2"></i>View Profile
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body p-5">
+                    <form method="POST" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Basic Information</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Hotel Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ hotel.name }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide the hotel name.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="category" class="form-label">Hotel Category *</label>
+                                <select class="form-control" id="category" name="category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Budget" {% if hotel.category == 'Budget' %}selected{% endif %}>Budget</option>
+                                    <option value="Standard" {% if hotel.category == 'Standard' %}selected{% endif %}>Standard</option>
+                                    <option value="Deluxe" {% if hotel.category == 'Deluxe' %}selected{% endif %}>Deluxe</option>
+                                    <option value="Luxury" {% if hotel.category == 'Luxury' %}selected{% endif %}>Luxury</option>
+                                    <option value="Resort" {% if hotel.category == 'Resort' %}selected{% endif %}>Resort</option>
+                                    <option value="Boutique" {% if hotel.category == 'Boutique' %}selected{% endif %}>Boutique</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a hotel category.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" required>{{ hotel.description }}</textarea>
+                            <div class="invalid-feedback">
+                                Please provide a description.
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="hotel_image" class="form-label">Hotel Image</label>
+                            <input type="file" class="form-control" id="hotel_image" name="hotel_image" accept="image/*">
+                            <div class="form-text">Upload a new image to replace the current one. Leave empty to keep current image.</div>
+                            {% if hotel.images %}
+                            <div class="mt-2">
+                                <small class="text-muted">Current image:</small><br>
+                                <img src="{{ url_for('static', filename=hotel.images) }}" 
+                                     alt="Current hotel image" 
+                                     class="img-thumbnail" 
+                                     style="width: 150px; height: 100px; object-fit: cover;">
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Location Information -->
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Location Information</h4>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address *</label>
+                            <input type="text" class="form-control" id="address" name="address" value="{{ hotel.address }}" required>
+                            <div class="invalid-feedback">
+                                Please provide the address.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="city" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="city" name="city" value="{{ hotel.city }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide the city.
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="state" class="form-label">State *</label>
+                                <input type="text" class="form-control" id="state" name="state" value="{{ hotel.state }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide the state.
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="country" class="form-label">Country *</label>
+                                <input type="text" class="form-control" id="country" name="country" value="{{ hotel.country }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide the country.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Contact Information</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" value="{{ hotel.phone }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a phone number.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ hotel.email }}" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid email address.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="website" class="form-label">Website (Optional)</label>
+                            <input type="url" class="form-control" id="website" name="website" value="{{ hotel.website or '' }}" placeholder="https://example.com">
+                        </div>
+
+                        <!-- Amenities -->
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Amenities</h4>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="amenities" class="form-label">Select Amenities</label>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {% set current_amenities = hotel.amenities|from_json if hotel.amenities else [] %}
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="wifi" name="amenities" value="Free WiFi" 
+                                               {% if "Free WiFi" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="wifi">Free WiFi</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="parking" name="amenities" value="Free Parking" 
+                                               {% if "Free Parking" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="parking">Free Parking</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="pool" name="amenities" value="Swimming Pool" 
+                                               {% if "Swimming Pool" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="pool">Swimming Pool</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="gym" name="amenities" value="Fitness Center" 
+                                               {% if "Fitness Center" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="gym">Fitness Center</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="restaurant" name="amenities" value="Restaurant" 
+                                               {% if "Restaurant" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="restaurant">Restaurant</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="spa" name="amenities" value="Spa" 
+                                               {% if "Spa" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="spa">Spa</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="room_service" name="amenities" value="24/7 Room Service" 
+                                               {% if "24/7 Room Service" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="room_service">24/7 Room Service</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="concierge" name="amenities" value="Concierge" 
+                                               {% if "Concierge" in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="concierge">Concierge</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('view_hotel_profile') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-times me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+
+{% block title %}Review {{ hotel.name }} - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h3 class="mb-0"><i class="fas fa-star"></i> Write a Review</h3>
+                    <p class="text-muted mb-0">Share your experience at {{ hotel.name }}</p>
+                </div>
+                <div class="card-body">
+                    <!-- Hotel Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            {% if hotel.images %}
+                                <img src="{{ url_for('static', filename=hotel.images) }}" 
+                                     alt="{{ hotel.name }}" 
+                                     class="img-fluid rounded shadow-sm" 
+                                     style="width: 100%; height: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light rounded d-flex align-items-center justify-content-center" 
+                                     style="height: 120px;">
+                                    <i class="fas fa-hotel fa-3x text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-9">
+                            <h4>{{ hotel.name }}</h4>
+                            <p class="text-muted mb-2">
+                                <i class="fas fa-map-marker-alt"></i> {{ hotel.address }}, {{ hotel.city }}, {{ hotel.state }}
+                            </p>
+                            <div class="d-flex align-items-center">
+                                <div class="hotel-rating me-3">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= hotel.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="badge bg-primary">{{ hotel.category }} Hotel</span>
+                                {% if hotel.rating > 0 %}
+                                    <span class="badge bg-success ms-2">{{ "%.1f"|format(hotel.rating) }} ({{ hotel.total_reviews }} reviews)</span>
+                                {% else %}
+                                    <span class="badge bg-secondary ms-2">No ratings yet</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST">
+                        <!-- Rating -->
+                        <div class="mb-4">
+                            <label class="form-label">Your Rating *</label>
+                            <div class="rating-input">
+                                <input type="radio" id="star5" name="rating" value="5" required>
+                                <label for="star5" class="star-label"><i class="fas fa-star"></i></label>
+                                
+                                <input type="radio" id="star4" name="rating" value="4">
+                                <label for="star4" class="star-label"><i class="fas fa-star"></i></label>
+                                
+                                <input type="radio" id="star3" name="rating" value="3">
+                                <label for="star3" class="star-label"><i class="fas fa-star"></i></label>
+                                
+                                <input type="radio" id="star2" name="rating" value="2">
+                                <label for="star2" class="star-label"><i class="fas fa-star"></i></label>
+                                
+                                <input type="radio" id="star1" name="rating" value="1">
+                                <label for="star1" class="star-label"><i class="fas fa-star"></i></label>
+                            </div>
+                            <small class="text-muted">Click on a star to rate (1 = Poor, 5 = Excellent)</small>
+                        </div>
+
+                        <!-- Booking Selection -->
+                        {% if bookings %}
+                        <div class="mb-4">
+                            <label for="booking_id" class="form-label">Select Booking (Optional)</label>
+                            <select class="form-control" id="booking_id" name="booking_id">
+                                <option value="">Choose a booking...</option>
+                                {% for booking in bookings %}
+                                    <option value="{{ booking.id }}">
+                                        Booking #{{ booking.booking_reference or booking.id }} - 
+                                        {{ booking.check_in.strftime('%B %d, %Y') }} to {{ booking.check_out.strftime('%B %d, %Y') }}
+                                        ({{ booking.rooms }} room{{ 's' if booking.rooms > 1 else '' }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Select the specific booking you want to review</small>
+                        </div>
+                        {% endif %}
+
+                        <!-- Review Title -->
+                        <div class="mb-4">
+                            <label for="title" class="form-label">Review Title</label>
+                            <input type="text" class="form-control" id="title" name="title" 
+                                   placeholder="Summarize your experience in a few words" maxlength="200">
+                            <small class="text-muted">Optional - A brief title for your review</small>
+                        </div>
+
+                        <!-- Review Comment -->
+                        <div class="mb-4">
+                            <label for="comment" class="form-label">Your Review *</label>
+                            <textarea class="form-control" id="comment" name="comment" rows="6" 
+                                      placeholder="Tell others about your experience at this hotel..." required></textarea>
+                            <small class="text-muted">Share details about your stay, service, amenities, etc.</small>
+                        </div>
+
+                        <!-- Review Guidelines -->
+                        <div class="alert alert-info">
+                            <h6><i class="fas fa-info-circle"></i> Review Guidelines</h6>
+                            <ul class="mb-0">
+                                <li>Be honest and constructive in your feedback</li>
+                                <li>Focus on your actual experience</li>
+                                <li>Avoid personal attacks or inappropriate language</li>
+                                <li>Your review will be verified based on your booking</li>
+                            </ul>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-paper-plane"></i> Submit Review
+                            </button>
+                            <a href="{{ url_for('hotel_detail', hotel_id=hotel.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Hotel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rating-input {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    gap: 5px;
+}
+
+.rating-input input[type="radio"] {
+    display: none;
+}
+
+.star-label {
+    font-size: 2rem;
+    color: #ddd;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.rating-input input[type="radio"]:checked ~ .star-label,
+.rating-input input[type="radio"]:checked ~ .star-label ~ .star-label {
+    color: #ffc107;
+}
+
+.star-label:hover,
+.star-label:hover ~ .star-label {
+    color: #ffc107;
+}
+
+.rating-input:hover .star-label {
+    color: #ffc107;
+}
+
+.rating-input input[type="radio"]:checked ~ .star-label {
+    color: #ffc107;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on rating
+    const ratingInputs = document.querySelectorAll('input[name="rating"]');
+    ratingInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            // Remove any existing feedback
+            const existingFeedback = document.querySelector('.rating-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            // Add feedback based on rating
+            const feedback = document.createElement('small');
+            feedback.className = 'rating-feedback text-muted mt-2 d-block';
+            
+            const rating = parseInt(this.value);
+            const feedbackTexts = {
+                1: 'Poor - Very disappointed with the experience',
+                2: 'Fair - Below expectations',
+                3: 'Good - Met expectations',
+                4: 'Very Good - Exceeded expectations',
+                5: 'Excellent - Outstanding experience'
+            };
+            
+            feedback.textContent = feedbackTexts[rating];
+            this.parentNode.appendChild(feedback);
+        });
+    });
+    
+    // Character counter for comment
+    const commentTextarea = document.getElementById('comment');
+    const maxLength = 1000;
+    
+    commentTextarea.addEventListener('input', function() {
+        const remaining = maxLength - this.value.length;
+        let counter = document.querySelector('.char-counter');
+        
+        if (!counter) {
+            counter = document.createElement('small');
+            counter.className = 'char-counter text-muted';
+            this.parentNode.appendChild(counter);
+        }
+        
+        counter.textContent = `${remaining} characters remaining`;
+        
+        if (remaining < 50) {
+            counter.className = 'char-counter text-warning';
+        } else {
+            counter.className = 'char-counter text-muted';
+        }
+    });
+});
+</script>
+{% endblock %}

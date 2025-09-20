@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block title %}Language Translator - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h2 class="mb-0"><i class="fas fa-language"></i> Language Translator</h2>
+                    <p class="text-muted mb-0">Overcome language barriers with real-time translation and voice support</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Tourist speaks (source)</label>
+                            <select id="sourceLang" class="form-control"></select>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Local hears (target)</label>
+                            <select id="targetLang" class="form-control"></select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Recognized source text</label>
+                            <textarea id="sourceText" class="form-control" rows="4" placeholder="Press Hold to Speak or type..."></textarea>
+                            <div class="d-flex gap-2 mt-2">
+                                <button id="btnHoldToSpeak" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-microphone"></i> Hold to Speak
+                                </button>
+                                <span class="badge bg-secondary" id="sttStatus">Idle</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Translated text (target)</label>
+                            <textarea id="translatedText" class="form-control" rows="4" readonly></textarea>
+                            <div class="d-flex gap-2 mt-2">
+                                <button id="btnTranslate" class="btn btn-success btn-sm">
+                                    <i class="fas fa-language"></i> Translate + Speak
+                                </button>
+                                <button id="btnSpeakTarget" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-volume-up"></i> Speak Only
+                                </button>
+                            </div>
+                            <audio id="audioTarget" class="mt-2" controls style="width: 100%;"></audio>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Local replies (target language)</label>
+                            <textarea id="localReply" class="form-control" rows="4" placeholder="Type local's reply in target language or hold to speak..."></textarea>
+                            <div class="d-flex gap-2 mt-2">
+                                <button id="btnLocalHold" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-microphone"></i> Hold to Speak (Local)
+                                </button>
+                                <span class="badge bg-secondary" id="sttLocalStatus">Idle</span>
+                                <button id="btnLocalSpeak" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-volume-up"></i> Speak Local Reply
+                                </button>
+                            </div>
+                            <audio id="audioLocal" class="mt-2" controls style="width: 100%;"></audio>
+                        </div>
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label">Translated back for tourist</label>
+                            <textarea id="backTranslated" class="form-control" rows="4" readonly></textarea>
+                            <div class="d-flex gap-2 mt-2">
+                                <button id="btnBackTranslate" class="btn btn-info btn-sm">
+                                    <i class="fas fa-exchange-alt"></i> Translate Back + Speak
+                                </button>
+                            </div>
+                            <audio id="audioBack" class="mt-2" controls style="width: 100%;"></audio>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Tip:</strong> Example flow — Source: Hindi, Target: Telugu. Tourist speaks Hindi → device speaks Telugu. Local types Telugu reply → device speaks Hindi.
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Decode HTML entities and parse JSON
+const languagesJson = `{{ languages|tojson }}`;
+const languages = JSON.parse(languagesJson.replace(/&#34;/g, '"').replace(/&quot;/g, '"'));
+const sourceSel = document.getElementById('sourceLang');
+const targetSel = document.getElementById('targetLang');
+const sourceText = document.getElementById('sourceText');
+const translatedText = document.getElementById('translatedText');
+const localReply = document.getElementById('localReply');
+const backTranslated = document.getElementById('backTranslated');
+const audioTarget = document.getElementById('audioTarget');
+const audioLocal = document.getElementById('audioLocal');
+const audioBack = document.getElementById('audioBack');
+const btnTranslate = document.getElementById('btnTranslate');
+const btnSpeakTarget = document.getElementById('btnSpeakTarget');
+const btnLocalSpeak = document.getElementById('btnLocalSpeak');
+const btnBackTranslate = document.getElementById('btnBackTranslate');
+const btnHoldToSpeak = document.getElementById('btnHoldToSpeak');
+const sttStatus = document.getElementById('sttStatus');
+const btnLocalHold = document.getElementById('btnLocalHold');
+const sttLocalStatus = document.getElementById('sttLocalStatus');
+
+// Populate language selects
+function populate() {
+    try {
+        console.log('Languages data:', languages);
+        if (!languages || typeof languages !== 'object') {
+            console.error('Languages data is invalid:', languages);
+            return;
+        }
+        
+        Object.entries(languages).forEach(([key, cfg]) => {
+            const o1 = document.createElement('option'); 
+            o1.value = key; 
+            o1.textContent = cfg.name; 
+            sourceSel.appendChild(o1);
+            
+            const o2 = document.createElement('option'); 
+            o2.value = key; 
+            o2.textContent = cfg.name; 
+            targetSel.appendChild(o2);
+        });
+        
+        // Set default values
+        sourceSel.value = 'hi';
+        targetSel.value = 'te';
+        
+        console.log('Language dropdowns populated successfully');
+    } catch (error) {
+        console.error('Error populating language dropdowns:', error);
+    }
+}
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    populate();
+});
+
+async function callTranslate(text, source, target) {
+    const res = await fetch('/api/translate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, source, target }) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'translate failed');
+    return data.translated;
+}
+
+async function callTTS(text, lang) {
+    const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, lang }) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'tts failed');
+    const blob = b64ToBlob(data.audio_base64, data.mime);
+    return URL.createObjectURL(blob);
+}
+
+async function callTranslateTTS(text, source, target) {
+    const res = await fetch('/api/translate-tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, source, target }) });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'translate-tts failed');
+    const blob = b64ToBlob(data.audio_base64, data.mime);
+    return { url: URL.createObjectURL(blob), translated: data.translated };
+}
+
+function b64ToBlob(b64, mime) {
+    const byteChars = atob(b64);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mime || 'audio/mpeg' });
+}
+
+// STT via Web Speech API (if supported)
+let recognition = null;
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = true;
+    recognition.lang = 'hi-IN';
+
+    recognition.onstart = () => sttStatus.textContent = 'Listening...';
+    recognition.onerror = () => sttStatus.textContent = 'Error';
+    recognition.onend = () => sttStatus.textContent = 'Idle';
+    recognition.onresult = (e) => {
+        let finalText = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            const transcript = e.results[i][0].transcript;
+            if (e.results[i].isFinal) finalText += transcript;
+        }
+        sourceText.value = finalText || sourceText.value;
+    };
+
+    btnHoldToSpeak.addEventListener('mousedown', () => {
+        recognition.lang = sourceSel.value + '-IN';
+        recognition.start();
+    });
+    btnHoldToSpeak.addEventListener('mouseup', () => {
+        try { recognition.stop(); } catch (e) {}
+    });
+    btnHoldToSpeak.addEventListener('mouseleave', () => {
+        try { recognition.stop(); } catch (e) {}
+    });
+    btnHoldToSpeak.addEventListener('touchstart', (e) => { e.preventDefault(); recognition.lang = sourceSel.value + '-IN'; recognition.start(); });
+    btnHoldToSpeak.addEventListener('touchend', () => { try { recognition.stop(); } catch (e) {} });
+
+    // Second recognizer for local side
+    const localRec = new SpeechRecognition();
+    localRec.continuous = false;
+    localRec.interimResults = true;
+    localRec.lang = 'te-IN';
+    localRec.onstart = () => sttLocalStatus.textContent = 'Listening...';
+    localRec.onerror = () => sttLocalStatus.textContent = 'Error';
+    localRec.onend = () => sttLocalStatus.textContent = 'Idle';
+    localRec.onresult = (e) => {
+        let finalText = '';
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+            const transcript = e.results[i][0].transcript;
+            if (e.results[i].isFinal) finalText += transcript;
+        }
+        if (finalText) localReply.value = finalText;
+    };
+
+    function startLocalRec() {
+        localRec.lang = targetSel.value + '-IN';
+        localRec.start();
+    }
+    function stopLocalRec() { try { localRec.stop(); } catch (e) {} }
+
+    btnLocalHold.addEventListener('mousedown', startLocalRec);
+    btnLocalHold.addEventListener('mouseup', stopLocalRec);
+    btnLocalHold.addEventListener('mouseleave', stopLocalRec);
+    btnLocalHold.addEventListener('touchstart', (e) => { e.preventDefault(); startLocalRec(); });
+    btnLocalHold.addEventListener('touchend', stopLocalRec);
+} else {
+    btnHoldToSpeak.disabled = true;
+    sttStatus.textContent = 'STT not supported in this browser';
+    btnLocalHold.disabled = true;
+    sttLocalStatus.textContent = 'STT not supported in this browser';
+}
+
+btnTranslate.addEventListener('click', async () => {
+    btnTranslate.disabled = true;
+    try {
+        const src = sourceSel.value, tgt = targetSel.value;
+        const text = sourceText.value.trim();
+        if (!text) {
+            alert('Please enter text to translate');
+            return;
+        }
+        if (!src || !tgt) {
+            alert('Please select source and target languages');
+            return;
+        }
+        const { url, translated } = await callTranslateTTS(text, src, tgt);
+        translatedText.value = translated;
+        audioTarget.src = url;
+        audioTarget.play();
+    } catch (e) { 
+        console.error('Translation error:', e);
+        alert('Translation failed: ' + (e.message || e)); 
+    }
+    finally { btnTranslate.disabled = false; }
+});
+
+btnSpeakTarget.addEventListener('click', async () => {
+    btnSpeakTarget.disabled = true;
+    try {
+        const text = translatedText.value.trim();
+        if (!text) {
+            alert('No translated text to speak');
+            return;
+        }
+        const url = await callTTS(text, targetSel.value);
+        audioTarget.src = url; 
+        audioTarget.play();
+    } catch (e) { 
+        console.error('TTS error:', e);
+        alert('Speech synthesis failed: ' + (e.message || e)); 
+    }
+    finally { btnSpeakTarget.disabled = false; }
+});
+
+btnLocalSpeak.addEventListener('click', async () => {
+    btnLocalSpeak.disabled = true;
+    try {
+        const url = await callTTS(localReply.value.trim(), targetSel.value);
+        audioLocal.src = url; audioLocal.play();
+    } catch (e) { alert(e.message || e); }
+    finally { btnLocalSpeak.disabled = false; }
+});
+
+async function doBackTranslateSpeak() {
+    btnBackTranslate.disabled = true;
+    try {
+        const src = targetSel.value, tgt = sourceSel.value;
+        const text = localReply.value.trim();
+        if (!text) {
+            alert('Please enter local reply text');
+            return;
+        }
+        if (!src || !tgt) {
+            alert('Please select source and target languages');
+            return;
+        }
+        const { url, translated } = await callTranslateTTS(text, src, tgt);
+        backTranslated.value = translated;
+        audioBack.src = url;
+        audioBack.play();
+    } catch (e) { 
+        console.error('Back translation error:', e);
+        alert('Back translation failed: ' + (e.message || e)); 
+    }
+    finally { btnBackTranslate.disabled = false; }
+}
+
+btnBackTranslate.addEventListener('click', doBackTranslateSpeak);
+</script>
+{% endblock %}

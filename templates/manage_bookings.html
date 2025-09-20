@@ -1,0 +1,514 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Bookings - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-1">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        Manage Your Bookings
+                    </h2>
+                    <p class="text-muted mb-0">View, modify, and track all your hotel and vehicle bookings</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('hotels') }}" class="btn btn-primary me-2">
+                        <i class="fas fa-search me-2"></i>
+                        Find Hotels
+                    </a>
+                    <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-success me-2">
+                        <i class="fas fa-car me-2"></i>
+                        Find Vehicles
+                    </a>
+                    <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i>
+                        Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-primary">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 class="stats-number">{{ (hotel_bookings|length) + (vehicle_bookings|length) }}</h3>
+                    <p class="stats-label">Total Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-info">
+                        <i class="fas fa-bed"></i>
+                    </div>
+                    <h3 class="stats-number">{{ hotel_bookings|length }}</h3>
+                    <p class="stats-label">Hotel Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3 class="stats-number">{{ vehicle_bookings|length }}</h3>
+                    <p class="stats-label">Vehicle Bookings</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="stats-number">{{ (hotel_bookings|selectattr('status', 'equalto', 'confirmed')|list|length) + (vehicle_bookings|selectattr('status', 'equalto', 'confirmed')|list|length) }}</h3>
+                    <p class="stats-label">Confirmed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="stats-number">{{ (hotel_bookings|selectattr('status', 'equalto', 'pending')|list|length) + (vehicle_bookings|selectattr('status', 'equalto', 'pending')|list|length) }}</h3>
+                    <p class="stats-label">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-danger">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3 class="stats-number">{{ wishlist_items|length if wishlist_items else 0 }}</h3>
+                    <p class="stats-label">Wishlist</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Bookings Section -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            My Bookings
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="bookingTypeFilter" id="allBookings" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary btn-sm" for="allBookings">All</label>
+
+                            <input type="radio" class="btn-check" name="bookingTypeFilter" id="hotelBookings" autocomplete="off">
+                            <label class="btn btn-outline-info btn-sm" for="hotelBookings">
+                                <i class="fas fa-bed me-1"></i>Hotels
+                            </label>
+
+                            <input type="radio" class="btn-check" name="bookingTypeFilter" id="vehicleBookings" autocomplete="off">
+                            <label class="btn btn-outline-success btn-sm" for="vehicleBookings">
+                                <i class="fas fa-car me-1"></i>Vehicles
+                            </label>
+                        </div>
+                        <div class="btn-group ms-2" role="group">
+                            <input type="radio" class="btn-check" name="statusFilter" id="allStatus" autocomplete="off" checked>
+                            <label class="btn btn-outline-secondary btn-sm" for="allStatus">All Status</label>
+
+                            <input type="radio" class="btn-check" name="statusFilter" id="upcomingBookings" autocomplete="off">
+                            <label class="btn btn-outline-warning btn-sm" for="upcomingBookings">Upcoming</label>
+
+                            <input type="radio" class="btn-check" name="statusFilter" id="pastBookings" autocomplete="off">
+                            <label class="btn btn-outline-dark btn-sm" for="pastBookings">Past</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if hotel_bookings or vehicle_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Service</th>
+                                        <th>Dates</th>
+                                        <th>Details</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Hotel Bookings -->
+                                    {% for booking in hotel_bookings %}
+                                    <tr class="booking-row hotel-booking" data-status="{{ booking.status }}" data-date="{{ booking.check_in }}" data-type="hotel">
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-bed me-1"></i>Hotel
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if booking.hotel.image %}
+                                                    <img src="{{ url_for('static', filename=booking.hotel.image) }}" 
+                                                         class="rounded me-3" alt="{{ booking.hotel.name }}" 
+                                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="rounded me-3 bg-light d-flex align-items-center justify-content-center" 
+                                                         style="width: 50px; height: 50px;">
+                                                        <i class="fas fa-bed text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ booking.hotel.name }}</h6>
+                                                    <small class="text-muted">{{ booking.hotel.city }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ booking.check_in.strftime('%b %d') }}</strong> - 
+                                                <strong>{{ booking.check_out.strftime('%b %d, %Y') }}</strong>
+                                            </div>
+                                            <small class="text-muted">{{ (booking.check_out - booking.check_in).days }} nights</small>
+                                        </td>
+                                        <td>
+                                            <div>{{ booking.guests }} guest{{ 's' if booking.guests > 1 else '' }}</div>
+                                            <small class="text-muted">{{ booking.rooms }} room{{ 's' if booking.rooms > 1 else '' }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>₹{{ "%.2f"|format(booking.total_amount) }}</strong>
+                                            {% if booking.booking_reference %}
+                                            <br><small class="text-muted">Ref: {{ booking.booking_reference }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if booking.status == 'confirmed' %}
+                                                <span class="badge bg-success">{{ booking.status.title() }}</span>
+                                            {% elif booking.status == 'pending' %}
+                                                <span class="badge bg-warning">{{ booking.status.title() }}</span>
+                                            {% elif booking.status == 'cancelled' %}
+                                                <span class="badge bg-danger">{{ booking.status.title() }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ booking.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if booking.status in ['pending', 'confirmed'] %}
+                                                <a href="{{ url_for('cancel_booking', booking_id=booking.id) }}" 
+                                                   class="btn btn-sm btn-outline-danger" title="Cancel"
+                                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                    <!-- Vehicle Bookings -->
+                                    {% for booking in vehicle_bookings %}
+                                    <tr class="booking-row vehicle-booking" data-status="{{ booking.status }}" data-date="{{ booking.pickup_date }}" data-type="vehicle">
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-car me-1"></i>Vehicle
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if booking.vehicle.images %}
+                                                    {% set vehicle_images = booking.vehicle.images|from_json %}
+                                                    {% if vehicle_images and vehicle_images[0] %}
+                                                        <img src="{{ url_for('static', filename=vehicle_images[0]) }}" 
+                                                             class="rounded me-3" alt="{{ booking.vehicle.make }} {{ booking.vehicle.model }}" 
+                                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="rounded me-3 bg-light d-flex align-items-center justify-content-center" 
+                                                             style="width: 50px; height: 50px;">
+                                                            <i class="fas fa-car text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <div class="rounded me-3 bg-light d-flex align-items-center justify-content-center" 
+                                                         style="width: 50px; height: 50px;">
+                                                        <i class="fas fa-car text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ booking.vehicle.make }} {{ booking.vehicle.model }}</h6>
+                                                    <small class="text-muted">{{ booking.rental_company.name }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ booking.pickup_date.strftime('%b %d') }}</strong> - 
+                                                <strong>{{ booking.return_date.strftime('%b %d, %Y') }}</strong>
+                                            </div>
+                                            <small class="text-muted">{{ (booking.return_date - booking.pickup_date).days }} days</small>
+                                        </td>
+                                        <td>
+                                            <div>{{ booking.vehicle.seating_capacity }} seats</div>
+                                            <small class="text-muted">{{ booking.vehicle.vehicle_type.title() }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>₹{{ "%.2f"|format(booking.total_amount) }}</strong>
+                                            {% if booking.booking_reference %}
+                                            <br><small class="text-muted">Ref: {{ booking.booking_reference }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if booking.status == 'confirmed' %}
+                                                <span class="badge bg-success">{{ booking.status.title() }}</span>
+                                            {% elif booking.status == 'pending' %}
+                                                <span class="badge bg-warning">{{ booking.status.title() }}</span>
+                                            {% elif booking.status == 'cancelled' %}
+                                                <span class="badge bg-danger">{{ booking.status.title() }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ booking.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('vehicle_booking_confirmation', booking_id=booking.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if booking.status in ['pending', 'confirmed'] %}
+                                                <a href="#" class="btn btn-sm btn-outline-danger" title="Cancel"
+                                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">No bookings yet</h5>
+                            <p class="text-muted">Start exploring and book your first hotel or vehicle!</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{{ url_for('hotels') }}" class="btn btn-primary">
+                                    <i class="fas fa-bed me-2"></i>
+                                    Find Hotels
+                                </a>
+                                <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-success">
+                                    <i class="fas fa-car me-2"></i>
+                                    Find Vehicles
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Wishlist -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-heart me-2"></i>
+                        My Wishlist
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if wishlist_items %}
+                        {% for item in wishlist_items[:3] %}
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://via.placeholder.com/40x40/007bff/ffffff?text={{ item.hotel.name[:2] }}" 
+                                 class="rounded me-3" alt="{{ item.hotel.name }}">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ item.hotel.name }}</h6>
+                                <small class="text-muted">{{ item.hotel.city }}</small>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('hotel_detail', hotel_id=item.hotel.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('remove_from_wishlist', hotel_id=item.hotel.id) }}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if wishlist_items|length > 3 %}
+                        <div class="text-center">
+                            <small class="text-muted">+{{ wishlist_items|length - 3 }} more items</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-heart text-muted"></i>
+                            <p class="text-muted mb-0">No items in wishlist</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('hotels') }}" class="btn btn-primary">
+                            <i class="fas fa-bed me-2"></i>
+                            Find Hotels
+                        </a>
+                        <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-success">
+                            <i class="fas fa-car me-2"></i>
+                            Find Vehicles
+                        </a>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i>
+                            Back to Home
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>
+                            Print Bookings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.booking-row {
+    transition: background-color 0.2s ease;
+}
+
+.booking-row:hover {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+@media print {
+    .btn, .card-header, .col-lg-4 {
+        display: none !important;
+    }
+    .container-fluid {
+        max-width: none !important;
+    }
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeFilterButtons = document.querySelectorAll('input[name="bookingTypeFilter"]');
+    const statusFilterButtons = document.querySelectorAll('input[name="statusFilter"]');
+    const bookingRows = document.querySelectorAll('.booking-row');
+    
+    function applyFilters() {
+        const selectedType = document.querySelector('input[name="bookingTypeFilter"]:checked').id;
+        const selectedStatus = document.querySelector('input[name="statusFilter"]:checked').id;
+        const today = new Date();
+        
+        bookingRows.forEach(row => {
+            let showType = true;
+            let showStatus = true;
+            
+            // Type filter
+            if (selectedType === 'hotelBookings') {
+                showType = row.classList.contains('hotel-booking');
+            } else if (selectedType === 'vehicleBookings') {
+                showType = row.classList.contains('vehicle-booking');
+            }
+            
+            // Status filter
+            if (selectedStatus === 'upcomingBookings') {
+                const bookingDate = new Date(row.dataset.date);
+                showStatus = bookingDate >= today;
+            } else if (selectedStatus === 'pastBookings') {
+                const bookingDate = new Date(row.dataset.date);
+                showStatus = bookingDate < today;
+            }
+            
+            row.style.display = (showType && showStatus) ? '' : 'none';
+        });
+    }
+    
+    // Add event listeners for both filter types
+    [...typeFilterButtons, ...statusFilterButtons].forEach(button => {
+        button.addEventListener('change', applyFilters);
+    });
+});
+</script>
+{% endblock %}

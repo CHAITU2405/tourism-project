@@ -1,0 +1,417 @@
+{% extends "base.html" %}
+
+{% block title %}Vehicle Rental Owner Dashboard - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-0">
+                        <i class="fas fa-tachometer-alt"></i> Vehicle Rental Dashboard
+                    </h1>
+                    <p class="text-muted mb-0">Welcome back, {{ owner.first_name }} {{ owner.last_name }}</p>
+                </div>
+                <div class="text-end">
+                    <div class="badge {% if owner.is_approved %}bg-success{% else %}bg-warning{% endif %} fs-6">
+                        {% if owner.is_approved %}Account Approved{% else %}Pending Approval{% endif %}
+                    </div>
+                    <br>
+                    <small class="text-muted">{{ owner.company_name }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Status Alert -->
+    {% if not owner.is_approved %}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="alert alert-warning">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Account Pending Approval</h5>
+                    <p class="mb-0">Your account is currently under review. You'll be able to manage your rental companies once approved. 
+                    Please ensure all your information is accurate and complete.</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ rentals|length }}</h4>
+                            <p class="mb-0">Rental Companies</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-building fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ bookings|length }}</h4>
+                            <p class="mb-0">Total Bookings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-car fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ bookings|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                            <p class="mb-0">Pending Bookings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4>{{ bookings|selectattr('status', 'equalto', 'confirmed')|list|length }}</h4>
+                            <p class="mb-0">Confirmed Bookings</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex gap-2 flex-wrap">
+                {% if owner.is_approved %}
+                    <a href="{{ url_for('vehicle_rental_register') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Register New Company
+                    </a>
+                    <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-eye"></i> View All Rentals
+                    </a>
+                {% endif %}
+                <a href="{{ url_for('vehicle_owner_logout') }}" class="btn btn-outline-danger">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rental Companies -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="mb-3">
+                <i class="fas fa-building"></i> My Rental Companies
+            </h3>
+            
+            {% if rentals %}
+                <div class="row">
+                    {% for rental in rentals %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">{{ rental.name }}</h6>
+                                    <span class="badge {% if rental.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                        {% if rental.is_approved %}Approved{% else %}Pending{% endif %}
+                                    </span>
+                                </div>
+                                <div class="card-body">
+                                    <p class="text-muted mb-2">
+                                        <i class="fas fa-map-marker-alt"></i> {{ rental.city }}, {{ rental.state }}
+                                    </p>
+                                    
+                                    {% if rental.description %}
+                                        <p class="card-text">{{ rental.description[:100] }}{% if rental.description|length > 100 %}...{% endif %}</p>
+                                    {% endif %}
+                                    
+                                    <div class="mb-3">
+                                        <small class="text-muted">Contact:</small>
+                                        <div>{{ rental.phone }}</div>
+                                        <div>{{ rental.email }}</div>
+                                    </div>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <small class="text-muted">Vehicles:</small>
+                                            <div><strong>{{ rental.vehicles|length }}</strong></div>
+                                        </div>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('vehicle_rental_detail', rental_id=rental.id) }}" 
+                                               class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            {% if owner.is_approved %}
+                                                <a href="{{ url_for('add_vehicle', rental_id=rental.id) }}" 
+                                                   class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-plus"></i> Add Vehicle
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No rental companies registered</h4>
+                    {% if owner.is_approved %}
+                        <p class="text-muted">Register your first vehicle rental company to get started</p>
+                        <a href="{{ url_for('vehicle_rental_register') }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Register Company
+                        </a>
+                    {% else %}
+                        <p class="text-muted">You'll be able to register companies once your account is approved</p>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    {% if bookings %}
+        <div class="row">
+            <div class="col-12">
+                <h3 class="mb-3">
+                    <i class="fas fa-calendar-alt"></i> Recent Bookings
+                </h3>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Vehicle</th>
+                                <th>Customer</th>
+                                <th>Pickup Date</th>
+                                <th>Return Date</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for booking in bookings[:10] %}
+                                <tr>
+                                    <td>
+                                        <code>{{ booking.booking_reference }}</code>
+                                    </td>
+                                    <td>
+                                        {{ booking.vehicle.make }} {{ booking.vehicle.model }}
+                                        <br>
+                                        <small class="text-muted">{{ booking.vehicle.vehicle_type.title() }}</small>
+                                    </td>
+                                    <td>
+                                        {{ booking.user.first_name }} {{ booking.user.last_name }}
+                                        <br>
+                                        <small class="text-muted">{{ booking.user.email }}</small>
+                                    </td>
+                                    <td>
+                                        {{ booking.pickup_date.strftime('%b %d, %Y') }}
+                                        <br>
+                                        <small class="text-muted">{{ booking.pickup_time.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>
+                                        {{ booking.return_date.strftime('%b %d, %Y') }}
+                                        <br>
+                                        <small class="text-muted">{{ booking.return_time.strftime('%I:%M %p') }}</small>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">₹{{ booking.total_amount }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if booking.status == 'confirmed' %}bg-success
+                                            {% elif booking.status == 'pending' %}bg-warning
+                                            {% elif booking.status == 'cancelled' %}bg-danger
+                                            {% else %}bg-info{% endif %}">
+                                            {{ booking.status.title() }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" class="btn btn-outline-primary btn-sm" 
+                                                    data-bs-toggle="modal" data-bs-target="#bookingModal{{ booking.id }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            {% if booking.status == 'pending' %}
+                                                <button type="button" class="btn btn-outline-success btn-sm">
+                                                    <i class="fas fa-check"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-outline-danger btn-sm">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Booking Detail Modal -->
+                                <div class="modal fade" id="bookingModal{{ booking.id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-lg">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">
+                                                    <i class="fas fa-car"></i> Booking Details
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-car"></i> Vehicle Information</h6>
+                                                        <table class="table table-sm table-borderless">
+                                                            <tr>
+                                                                <td><strong>Vehicle:</strong></td>
+                                                                <td>{{ booking.vehicle.make }} {{ booking.vehicle.model }} ({{ booking.vehicle.year }})</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Type:</strong></td>
+                                                                <td>{{ booking.vehicle.vehicle_type.title() }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Seating:</strong></td>
+                                                                <td>{{ booking.vehicle.seating_capacity }} seats</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-user"></i> Customer Information</h6>
+                                                        <table class="table table-sm table-borderless">
+                                                            <tr>
+                                                                <td><strong>Name:</strong></td>
+                                                                <td>{{ booking.user.first_name }} {{ booking.user.last_name }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Email:</strong></td>
+                                                                <td>{{ booking.user.email }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Phone:</strong></td>
+                                                                <td>{{ booking.user.phone or 'Not provided' }}</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                
+                                                <hr>
+                                                
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-calendar-alt"></i> Rental Period</h6>
+                                                        <table class="table table-sm table-borderless">
+                                                            <tr>
+                                                                <td><strong>Pickup:</strong></td>
+                                                                <td>{{ booking.pickup_date.strftime('%B %d, %Y') }} at {{ booking.pickup_time.strftime('%I:%M %p') }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Return:</strong></td>
+                                                                <td>{{ booking.return_date.strftime('%B %d, %Y') }} at {{ booking.return_time.strftime('%I:%M %p') }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Duration:</strong></td>
+                                                                <td>{{ (booking.return_date - booking.pickup_date).days }} day(s)</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <h6><i class="fas fa-map-marker-alt"></i> Locations</h6>
+                                                        <table class="table table-sm table-borderless">
+                                                            <tr>
+                                                                <td><strong>Pickup:</strong></td>
+                                                                <td>{{ booking.pickup_location }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td><strong>Return:</strong></td>
+                                                                <td>{{ booking.return_location }}</td>
+                                                            </tr>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                
+                                                {% if booking.special_requests %}
+                                                    <hr>
+                                                    <div class="row">
+                                                        <div class="col-12">
+                                                            <h6><i class="fas fa-comment"></i> Special Requests</h6>
+                                                            <p class="text-muted">{{ booking.special_requests }}</p>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                {% if booking.status == 'pending' %}
+                                                    <button type="button" class="btn btn-success">
+                                                        <i class="fas fa-check"></i> Confirm
+                                                    </button>
+                                                    <button type="button" class="btn btn-danger">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

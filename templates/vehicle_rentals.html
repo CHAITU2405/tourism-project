@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Vehicle Rentals - TourismHub') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+            <div class="card shadow-sm sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>
+                        {{ _('Filters') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('vehicle_rentals') }}" id="filterForm">
+                        <!-- Search -->
+                        <div class="mb-3">
+                            <label class="form-label">{{ _('Search') }}</label>
+                            <input type="text" class="form-control" name="search" 
+                                   placeholder="{{ _('Vehicle make, model, city...') }}" value="{{ search }}">
+                        </div>
+
+                        <!-- Price Range -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('Price Range (per day)') }}</label>
+                            <div class="row">
+                                <div class="col-6">
+                                    <input type="number" class="form-control" name="min_price" 
+                                           placeholder="{{ _('Min') }}" value="{{ min_price or '' }}">
+                                </div>
+                                <div class="col-6">
+                                    <input type="number" class="form-control" name="max_price" 
+                                           placeholder="{{ _('Max') }}" value="{{ max_price or '' }}">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Vehicle Type -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('Vehicle Type') }}</label>
+                            <select class="form-control" name="vehicle_type">
+                                <option value="">{{ _('All Types') }}</option>
+                                <option value="car" {% if vehicle_type == 'car' %}selected{% endif %}>{{ _('Car') }}</option>
+                                <option value="bike" {% if vehicle_type == 'bike' %}selected{% endif %}>{{ _('Bike') }}</option>
+                                <option value="scooty" {% if vehicle_type == 'scooty' %}selected{% endif %}>{{ _('Scooty') }}</option>
+                                <option value="bicycle" {% if vehicle_type == 'bicycle' %}selected{% endif %}>{{ _('Bicycle') }}</option>
+                                <option value="mini_van" {% if vehicle_type == 'mini_van' %}selected{% endif %}>{{ _('Mini Van') }}</option>
+                                <option value="jeep" {% if vehicle_type == 'jeep' %}selected{% endif %}>{{ _('Jeep') }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Transmission -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('Transmission') }}</label>
+                            <select class="form-control" name="transmission">
+                                <option value="">{{ _('All') }}</option>
+                                <option value="automatic" {% if transmission == 'automatic' %}selected{% endif %}>{{ _('Automatic') }}</option>
+                                <option value="manual" {% if transmission == 'manual' %}selected{% endif %}>{{ _('Manual') }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Fuel Type -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('Fuel Type') }}</label>
+                            <select class="form-control" name="fuel_type">
+                                <option value="">{{ _('All') }}</option>
+                                <option value="petrol" {% if fuel_type == 'petrol' %}selected{% endif %}>{{ _('Petrol') }}</option>
+                                <option value="diesel" {% if fuel_type == 'diesel' %}selected{% endif %}>{{ _('Diesel') }}</option>
+                                <option value="electric" {% if fuel_type == 'electric' %}selected{% endif %}>{{ _('Electric') }}</option>
+                                <option value="hybrid" {% if fuel_type == 'hybrid' %}selected{% endif %}>{{ _('Hybrid') }}</option>
+                            </select>
+                        </div>
+
+                        <!-- City -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('City') }}</label>
+                            <select class="form-control" name="city">
+                                <option value="">{{ _('All Cities') }}</option>
+                                {% for city_option in cities %}
+                                    <option value="{{ city_option }}" {% if city == city_option %}selected{% endif %}>
+                                        {{ city_option }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Sort By -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('Sort By') }}</label>
+                            <select class="form-control" name="sort_by">
+                                <option value="name" {% if sort_by == 'name' %}selected{% endif %}>{{ _('Name') }}</option>
+                                <option value="price" {% if sort_by == 'price' %}selected{% endif %}>{{ _('Price') }}</option>
+                                <option value="rating" {% if sort_by == 'rating' %}selected{% endif %}>{{ _('Rating') }}</option>
+                                <option value="city" {% if sort_by == 'city' %}selected{% endif %}>{{ _('City') }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Sort Order -->
+                        <div class="mb-3">
+                            <label class='form-label'>{{ _('Sort Order') }}</label>
+                            <select class="form-control" name="sort_order">
+                                <option value="asc" {% if sort_order == 'asc' %}selected{% endif %}>{{ _('Ascending') }}</option>
+                                <option value="desc" {% if sort_order == 'desc' %}selected{% endif %}>{{ _('Descending') }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Filter Buttons -->
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-2"></i>{{ _('Apply Filters') }}
+                            </button>
+                            <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-undo me-2"></i>{{ _('Clear All Filters') }}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>{{ _('Vehicle Rentals') }}</h2>
+                <div class="d-flex align-items-center">
+                    <span class="me-3">{{ rentals|length }} {{ _('rental companies found') }}</span>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                            {{ _('Sort:') }} 
+                            {% if sort_by == 'name' %}
+                                {% if sort_order == 'asc' %}{{ _('Name A-Z') }}{% else %}{{ _('Name Z-A') }}{% endif %}
+                            {% elif sort_by == 'price' %}
+                                {% if sort_order == 'asc' %}{{ _('Price Low-High') }}{% else %}{{ _('Price High-Low') }}{% endif %}
+                            {% elif sort_by == 'rating' %}
+                                {% if sort_order == 'asc' %}{{ _('Rating Low-High') }}{% else %}{{ _('Rating High-Low') }}{% endif %}
+                            {% elif sort_by == 'city' %}
+                                {% if sort_order == 'asc' %}{{ _('City A-Z') }}{% else %}{{ _('City Z-A') }}{% endif %}
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="{{ url_for('vehicle_rentals', search=request.args.get('search', ''), city=request.args.get('city', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), vehicle_type=request.args.get('vehicle_type', ''), transmission=request.args.get('transmission', ''), fuel_type=request.args.get('fuel_type', ''), sort_by='name', sort_order='asc') }}">{{ _('Name A-Z') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('vehicle_rentals', search=request.args.get('search', ''), city=request.args.get('city', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), vehicle_type=request.args.get('vehicle_type', ''), transmission=request.args.get('transmission', ''), fuel_type=request.args.get('fuel_type', ''), sort_by='name', sort_order='desc') }}">{{ _('Name Z-A') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('vehicle_rentals', search=request.args.get('search', ''), city=request.args.get('city', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), vehicle_type=request.args.get('vehicle_type', ''), transmission=request.args.get('transmission', ''), fuel_type=request.args.get('fuel_type', ''), sort_by='price', sort_order='asc') }}">{{ _('Price Low-High') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('vehicle_rentals', search=request.args.get('search', ''), city=request.args.get('city', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), vehicle_type=request.args.get('vehicle_type', ''), transmission=request.args.get('transmission', ''), fuel_type=request.args.get('fuel_type', ''), sort_by='price', sort_order='desc') }}">{{ _('Price High-Low') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('vehicle_rentals', search=request.args.get('search', ''), city=request.args.get('city', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), vehicle_type=request.args.get('vehicle_type', ''), transmission=request.args.get('transmission', ''), fuel_type=request.args.get('fuel_type', ''), sort_by='rating', sort_order='desc') }}">{{ _('Rating High-Low') }}</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('vehicle_rentals', search=request.args.get('search', ''), city=request.args.get('city', ''), min_price=request.args.get('min_price', ''), max_price=request.args.get('max_price', ''), vehicle_type=request.args.get('vehicle_type', ''), transmission=request.args.get('transmission', ''), fuel_type=request.args.get('fuel_type', ''), sort_by='city', sort_order='asc') }}">{{ _('City A-Z') }}</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            {% if rentals %}
+                <div class="row">
+                    {% for rental in rentals %}
+                        <div class="col-lg-6 col-xl-4 mb-4">
+                            <div class="card h-100 shadow-sm">
+                                {% if rental.profile_picture %}
+                                    <img src="{{ url_for('static', filename=rental.profile_picture) }}" 
+                                         class="card-img-top" alt="{{ rental.name }}"
+                                         style="height: 200px; object-fit: cover;">
+                                {% else %}
+                                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                                         style="height: 200px;">
+                                        <i class="fas fa-building fa-3x text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">{{ rental.name }}</h5>
+                                    <p class="card-text text-muted">
+                                        <i class="fas fa-map-marker-alt me-1"></i>{{ rental.city }}, {{ rental.state }}
+                                    </p>
+                                    
+                                    {% if rental.description %}
+                                        <p class="card-text">{{ rental.description[:100] }}{% if rental.description|length > 100 %}...{% endif %}</p>
+                                    {% endif %}
+                                    
+                                    <div class="mb-2">
+                                        {% if rental.rating > 0 %}
+                                            <div class="rating">
+                                                {% for i in range(5) %}
+                                                    {% if i < rental.rating %}
+                                                        <i class="fas fa-star text-warning"></i>
+                                                    {% else %}
+                                                        <i class="far fa-star text-warning"></i>
+                                                    {% endif %}
+                                                {% endfor %}
+                                                <span class="ms-1 text-muted">({{ rental.rating }})</span>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <div class="mt-auto">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <span class="text-muted">
+                                                <i class="fas fa-car me-1"></i>{{ rental.vehicles|length }} {{ _('vehicles') }}
+                                            </span>
+                                            {% if rental.vehicles %}
+                                                <span class="text-success">
+                                                    {{ _('From') }} ₹{{ rental.vehicles|min(attribute='price_per_day')|attr('price_per_day') }}/{{ _('day') }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        
+                                        <div class="d-flex gap-2">
+                                            <a href="{{ url_for('vehicle_rental_detail', rental_id=rental.id) }}" 
+                                               class="btn btn-primary flex-fill">
+                                                <i class="fas fa-eye me-1"></i>{{ _('View Vehicles') }}
+                                            </a>
+                                            {% if rental.website %}
+                                                <a href="{{ rental.website }}" target="_blank" class="btn btn-outline-secondary">
+                                                    <i class="fas fa-external-link-alt"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">{{ _('No vehicle rentals found') }}</h4>
+                    <p class="text-muted">{{ _('Try adjusting your search criteria or filters.') }}</p>
+                    <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-primary">
+                        <i class="fas fa-undo me-2"></i>Clear All Filters
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change
+    const filterForm = document.getElementById('filterForm');
+    const filterInputs = filterForm.querySelectorAll('select, input[type="text"], input[type="number"]');
+    
+    filterInputs.forEach(function(input) {
+        input.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

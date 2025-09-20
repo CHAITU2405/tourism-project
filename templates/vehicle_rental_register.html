@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Register Vehicle Rental Company - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-building"></i> Register Vehicle Rental Company
+                    </h2>
+                    <p class="mb-0">Add your vehicle rental business to our platform</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-info-circle"></i> Company Information</h5>
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Company Name *</label>
+                                    <input type="text" class="form-control" id="name" name="name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3" 
+                                              placeholder="Brief description of your rental company..."></textarea>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-map-marker-alt"></i> Location</h5>
+                                <div class="mb-3">
+                                    <label for="address" class="form-label">Address *</label>
+                                    <input type="text" class="form-control" id="address" name="address" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="city" class="form-label">City *</label>
+                                    <input type="text" class="form-control" id="city" name="city" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="state" class="form-label">State *</label>
+                                    <input type="text" class="form-control" id="state" name="state" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="country" class="form-label">Country *</label>
+                                    <input type="text" class="form-control" id="country" name="country" value="India" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-phone"></i> Contact Information</h5>
+                                <div class="mb-3">
+                                    <label for="phone" class="form-label">Phone Number *</label>
+                                    <input type="tel" class="form-control" id="phone" name="phone" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email Address *</label>
+                                    <input type="email" class="form-control" id="email" name="email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="website" class="form-label">Website</label>
+                                    <input type="url" class="form-control" id="website" name="website" 
+                                           placeholder="https://www.yourcompany.com">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-concierge-bell"></i> Amenities & Services</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Select available amenities:</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity1" name="amenities" value="24/7 Support">
+                                                <label class="form-check-label" for="amenity1">24/7 Support</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity2" name="amenities" value="Free Pickup/Drop">
+                                                <label class="form-check-label" for="amenity2">Free Pickup/Drop</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity3" name="amenities" value="GPS Navigation">
+                                                <label class="form-check-label" for="amenity3">GPS Navigation</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity4" name="amenities" value="Child Seats">
+                                                <label class="form-check-label" for="amenity4">Child Seats</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity5" name="amenities" value="Insurance Coverage">
+                                                <label class="form-check-label" for="amenity5">Insurance Coverage</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity6" name="amenities" value="Roadside Assistance">
+                                                <label class="form-check-label" for="amenity6">Roadside Assistance</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity7" name="amenities" value="Multiple Locations">
+                                                <label class="form-check-label" for="amenity7">Multiple Locations</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="amenity8" name="amenities" value="Online Booking">
+                                                <label class="form-check-label" for="amenity8">Online Booking</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Important Information:</h6>
+                                    <ul class="mb-0">
+                                        <li>Your rental company will be reviewed by our admin team before approval</li>
+                                        <li>You will be able to add vehicles and manage bookings once approved</li>
+                                        <li>Make sure all information provided is accurate and up-to-date</li>
+                                        <li>You can update your company information later from your dashboard</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('vehicle_rental_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Register Company
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = ['name', 'address', 'city', 'state', 'country', 'phone', 'email'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Email validation
+        const email = document.getElementById('email');
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (email.value && !emailRegex.test(email.value)) {
+            email.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Phone validation
+        const phone = document.getElementById('phone');
+        const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+        if (phone.value && !phoneRegex.test(phone.value.replace(/\s/g, ''))) {
+            phone.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly');
+        }
+    });
+});
+</script>
+{% endblock %}

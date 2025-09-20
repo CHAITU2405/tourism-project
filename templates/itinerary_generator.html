@@ -1,0 +1,183 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Comprehensive Travel Planner - TourismHub') }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col-12 text-center">
+            <h1 class="display-4 mb-3">
+                <i class="fas fa-route text-primary me-3"></i>
+                {{ _('Comprehensive Travel Planner') }}
+            </h1>
+            <p class="lead text-muted">
+                {{ _('Get detailed travel itineraries with costs, attractions, and transport options') }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Generator Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-magic me-2"></i>
+                        {{ _('Plan Your Journey') }}
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" id="itineraryForm">
+                        <div class="row g-4">
+                            <!-- Start Location -->
+                            <div class="col-md-6">
+                                <label for="start_location" class="form-label">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    {{ _('Start Location') }}
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="start_location" 
+                                       name="start_location" 
+                                       placeholder="{{ _('e.g., Mumbai, Delhi, Bangalore') }}"
+                                       required>
+                                <div class="form-text">{{ _('Enter your starting city') }}</div>
+                            </div>
+
+                            <!-- End Location -->
+                            <div class="col-md-6">
+                                <label for="end_location" class="form-label">
+                                    <i class="fas fa-flag-checkered me-2"></i>
+                                    {{ _('Destination') }}
+                                </label>
+                                <input type="text" 
+                                       class="form-control form-control-lg" 
+                                       id="end_location" 
+                                       name="end_location" 
+                                       placeholder="{{ _('e.g., Goa, Kerala, Rajasthan') }}"
+                                       required>
+                                <div class="form-text">{{ _('Enter your destination city') }}</div>
+                            </div>
+
+                                    <!-- Total Time Input -->
+                                    <div class="col-md-6">
+                                        <label for="total_time" class="form-label">
+                                            <i class="fas fa-clock me-2"></i>
+                                            {{ _('Total Available Time (Hours)') }}
+                                        </label>
+                                        <input type="number" 
+                                               class="form-control form-control-lg" 
+                                               id="total_time" 
+                                               name="total_time" 
+                                               placeholder="{{ _('e.g., 24, 48, 72') }}"
+                                               min="1"
+                                               max="168"
+                                               step="1"
+                                       required>
+                                        <div class="form-text">{{ _('Enter the total time you have available for your journey (in hours)') }}</div>
+                            </div>
+
+                            <!-- Mood Selection -->
+                            <div class="col-md-6">
+                                <label for="mood" class="form-label">
+                                            <i class="fas fa-heart me-2"></i>
+                                            {{ _('How are you feeling for this trip?') }}
+                                </label>
+                                <select class="form-control form-control-lg" id="mood" name="mood" required>
+                                            <option value="neutral">{{ _('Neutral - Show all attractions') }}</option>
+                                            <option value="relaxed">{{ _('Relaxed - Scenic and peaceful places') }}</option>
+                                            <option value="adventurous">{{ _('Adventurous - Historic and exciting places') }}</option>
+                                </select>
+                                        <div class="form-text">{{ _('Choose your mood to get personalized attraction recommendations') }}</div>
+                            </div>
+
+                            <!-- Generate Button -->
+                            <div class="col-12 text-center">
+                                <button type="submit" class="btn btn-primary btn-lg px-5">
+                                    <i class="fas fa-magic me-2"></i>
+                                    {{ _('Generate Travel Plan') }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <h3 class="text-center mb-4">What You'll Get</h3>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-route fa-3x text-primary"></i>
+                </div>
+                    <h5>Route Planning</h5>
+                    <p class="text-muted">Detailed route information with distance and driving time calculations</p>
+            </div>
+        </div>
+    </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-map-marked-alt fa-3x text-success"></i>
+        </div>
+                    <h5>Attractions & Costs</h5>
+                    <p class="text-muted">Top attractions with entry costs for destination and stopover cities</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-bus fa-3x text-warning"></i>
+                </div>
+                    <h5>Transport Options</h5>
+                    <p class="text-muted">Multiple transport modes with time and cost estimates</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.feature-icon {
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card {
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn-primary {
+    background: linear-gradient(45deg, #007bff, #0056b3);
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(45deg, #0056b3, #004085);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Company Profile - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-edit"></i> Edit Company Profile
+            </h1>
+            <p class="lead">Update your rental company information</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-building"></i> Company Information
+                    </h2>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <!-- Company Basic Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> Basic Information</h5>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="company_name" class="form-label">Company Name *</label>
+                                <input type="text" class="form-control" id="company_name" name="company_name" 
+                                       value="{{ rental.name }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="phone" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" 
+                                       value="{{ rental.phone }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" 
+                                       value="{{ rental.email }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="website" class="form-label">Website (Optional)</label>
+                                <input type="url" class="form-control" id="website" name="website" 
+                                       value="{{ rental.website or '' }}" placeholder="https://example.com">
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Company Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required>{{ rental.description or '' }}</textarea>
+                        </div>
+                        
+                        <!-- Profile Picture -->
+                        <div class="mb-4">
+                            <h5><i class="fas fa-image"></i> Profile Picture</h5>
+                            {% if rental.profile_picture %}
+                                <div class="mb-3">
+                                    <label class="form-label">Current Profile Picture</label>
+                                    <div>
+                                        <img src="{{ url_for('static', filename=rental.profile_picture) }}" 
+                                             alt="{{ rental.name }}" class="img-fluid rounded" 
+                                             style="max-height: 150px; max-width: 200px;">
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="mb-3">
+                                <label for="profile_picture" class="form-label">
+                                    {% if rental.profile_picture %}Update Profile Picture{% else %}Upload Profile Picture{% endif %}
+                                </label>
+                                <input type="file" class="form-control" id="profile_picture" name="profile_picture" 
+                                       accept="image/*">
+                                <div class="form-text">Upload a professional company logo or image (JPG, PNG, GIF - Max 5MB)</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Location Information -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-map-marker-alt"></i> Location Information</h5>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address *</label>
+                            <textarea class="form-control" id="address" name="address" rows="2" required>{{ rental.address or '' }}</textarea>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="city" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="city" name="city" 
+                                       value="{{ rental.city or '' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="state" class="form-label">State *</label>
+                                <input type="text" class="form-control" id="state" name="state" 
+                                       value="{{ rental.state or '' }}" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="country" class="form-label">Country *</label>
+                                <input type="text" class="form-control" id="country" name="country" 
+                                       value="{{ rental.country or '' }}" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Services & Amenities -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <h5><i class="fas fa-concierge-bell"></i> Services & Amenities</h5>
+                                <p class="text-muted">Select all services and amenities your company provides:</p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            {% for amenity in available_amenities %}
+                                <div class="col-md-6 col-lg-4 mb-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" 
+                                               id="amenity_{{ loop.index }}" name="amenities" 
+                                               value="{{ amenity }}"
+                                               {% if amenity in current_amenities %}checked{% endif %}>
+                                        <label class="form-check-label" for="amenity_{{ loop.index }}">
+                                            {{ amenity }}
+                                        </label>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('vehicle_rental_profile') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Profile
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Profile Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb"></i>
+                        <strong>Tips for a great profile:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Use a clear, professional company logo</li>
+                            <li>Write a detailed description of your services</li>
+                            <li>Select relevant amenities you provide</li>
+                            <li>Keep contact information up to date</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Note:</strong> Changes to your profile will be visible to customers immediately after saving.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar"></i> Current Statistics
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h5 class="text-primary">{{ rental.vehicles|length }}</h5>
+                            <small class="text-muted">Vehicles</small>
+                        </div>
+                        <div class="col-6">
+                            <h5 class="text-success">{{ rental.bookings|length }}</h5>
+                            <small class="text-muted">Bookings</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.form-check-input:checked {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.btn {
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.alert {
+    border-left: 4px solid;
+}
+
+.alert-info {
+    border-left-color: #0dcaf0;
+}
+
+.alert-warning {
+    border-left-color: #ffc107;
+}
+</style>
+{% endblock %}

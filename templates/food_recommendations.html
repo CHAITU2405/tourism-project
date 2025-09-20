@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Food Recommendations - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h2 class="mb-0"><i class="fas fa-utensils"></i> Local Food Recommendations</h2>
+                    <p class="text-muted mb-0">Discover authentic local dishes and specialties in your destination city</p>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Search Form -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <form method="POST" class="needs-validation" novalidate>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control form-control-lg" 
+                                           name="city" 
+                                           placeholder="Enter city name (e.g., Delhi, Mumbai, Bangalore, Vijayawada...)" 
+                                           value="{{ city if city else '' }}"
+                                           required>
+                                    <button class="btn btn-primary btn-lg" type="submit">
+                                        <i class="fas fa-search me-2"></i>Find Local Foods
+                                    </button>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-info-circle text-primary"></i>
+                                    Enter any Indian city name to get authentic local food recommendations
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Error Messages -->
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Results -->
+                    {% if found %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-success" role="alert">
+                                <h5 class="alert-heading">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Top foods in {{ nearest_city.capitalize() }}
+                                    {% if city.lower() != nearest_city.lower() %}
+                                        <small class="text-muted">(nearest to {{ city.capitalize() }})</small>
+                                    {% endif %}
+                                </h5>
+                                <p class="mb-0">Discover the authentic flavors of this region!</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Vegetarian Foods -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-leaf me-2"></i>Vegetarian Specialties
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for food in veg_foods %}
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <i class="fas fa-utensils text-success me-3"></i>
+                                            <span class="fw-medium">{{ food }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Non-Vegetarian Foods -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100 border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-drumstick-bite me-2"></i>Non-Vegetarian Specialties
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for food in nonveg_foods %}
+                                        <li class="list-group-item d-flex align-items-center">
+                                            <i class="fas fa-utensils text-danger me-3"></i>
+                                            <span class="fw-medium">{{ food }}</span>
+                                        </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>Food Tips & Information
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary">🍽️ Best Time to Try</h6>
+                                            <p class="small text-muted">Most local dishes are available throughout the day, but some are traditionally served during specific meals.</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary">📍 Where to Find</h6>
+                                            <p class="small text-muted">Look for local restaurants, street food vendors, and traditional eateries for the most authentic experience.</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary">🌶️ Spice Level</h6>
+                                            <p class="small text-muted">Local dishes can be quite spicy. Don't hesitate to ask for milder versions if you prefer.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Try Another City -->
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <button class="btn btn-outline-primary" onclick="clearResults()">
+                                <i class="fas fa-search me-2"></i>Try Another City
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Popular Cities Quick Access -->
+                    {% if not found %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="text-center mb-3">Popular Cities</h5>
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Delhi')">Delhi</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Mumbai')">Mumbai</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Bangalore')">Bangalore</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Hyderabad')">Hyderabad</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Chennai')">Chennai</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Kolkata')">Kolkata</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Pune')">Pune</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchCity('Jaipur')">Jaipur</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Back to Home -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+function searchCity(cityName) {
+    document.querySelector('input[name="city"]').value = cityName;
+    document.querySelector('form').submit();
+}
+
+function clearResults() {
+    document.querySelector('input[name="city"]').value = '';
+    document.querySelector('input[name="city"]').focus();
+}
+
+// Auto-focus on city input
+document.addEventListener('DOMContentLoaded', function() {
+    const cityInput = document.querySelector('input[name="city"]');
+    if (cityInput && !cityInput.value) {
+        cityInput.focus();
+    }
+});
+</script>
+{% endblock %}

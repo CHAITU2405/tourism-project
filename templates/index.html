@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('VoyagerKit - Your Gateway to Amazing Destinations') }}{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container">
+        <div class="row align-items-center min-vh-100">
+            <div class="col-lg-6">
+                <div class="hero-content text-white">
+                    <div class="hero-badge mb-3">
+                        <span class="badge bg-warning text-dark px-3 py-2">
+                            <i class="fas fa-star me-1"></i>
+                            {{ _('Trusted by 10,000+ Travelers') }}
+                        </span>
+                    </div>
+                    <h1 class="hero-title mb-4">
+                        {{ _('Discover Amazing Destinations') }}
+                        <span class="text-warning d-block">{{ _('Around the World') }}</span>
+                    </h1>
+                    <p class="hero-subtitle mb-4">
+                        {{ _('Book your perfect stay at luxury hotels, boutique accommodations, and unique properties. Experience unforgettable journeys with VoyagerKit.') }}
+                    </p>
+                    <div class="hero-buttons d-flex flex-column flex-sm-row gap-3">
+                        <a href="{{ url_for('hotels') }}" class="btn btn-warning btn-lg">
+                            <i class="fas fa-search me-2"></i>
+                            {{ _('Find Hotels') }}
+                        </a>
+                        <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-car me-2"></i>
+                            {{ _('Rent Vehicles') }}
+                        </a>
+                        <a href="{{ url_for('itinerary_generator') }}" class="btn btn-outline-warning btn-lg">
+                            <i class="fas fa-route me-2"></i>
+                            {{ _('Plan Trip') }}
+                        </a>
+                    </div>
+                    <div class="hero-stats mt-4">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h3 class="stat-number">500+</h3>
+                                    <p class="stat-label">{{ _('Hotels') }}</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h3 class="stat-number">1000+</h3>
+                                    <p class="stat-label">{{ _('Vehicles') }}</p>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-item">
+                                    <h3 class="stat-number">50+</h3>
+                                    <p class="stat-label">{{ _('Cities') }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-search-card">
+                    <div class="card shadow-lg border-0">
+                        <div class="card-header bg-gradient-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                {{ _('Find Your Perfect Stay') }}
+                            </h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <form action="{{ url_for('hotels') }}" method="GET">
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">{{ _('Destination') }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-map-marker-alt text-primary"></i>
+                                            </span>
+                                            <input type="text" class="form-control form-control-lg" name="search" 
+                                                   placeholder="{{ _('Where are you going?') }}" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">{{ _('Check-in Date') }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-calendar-alt text-primary"></i>
+                                            </span>
+                                            <input type="date" class="form-control" name="check_in" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">{{ _('Check-out Date') }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-calendar-alt text-primary"></i>
+                                            </span>
+                                            <input type="date" class="form-control" name="check_out" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="form-label fw-bold">{{ _('Guests') }}</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light">
+                                                <i class="fas fa-users text-primary"></i>
+                                            </span>
+                                            <select class="form-control" name="guests" required>
+                                                <option value="1">{{ _('1 Guest') }}</option>
+                                                <option value="2" selected>{{ _('2 Guests') }}</option>
+                                                <option value="3">{{ _('3 Guests') }}</option>
+                                                <option value="4">{{ _('4+ Guests') }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            <i class="fas fa-search me-2"></i>
+                                            {{ _('Search Hotels') }}
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="section-title">{{ _('Why Choose VoyagerKit?') }}</h2>
+                <p class="section-subtitle">{{ _('Experience the best in travel and accommodation') }}</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-primary">
+                        <i class="fas fa-hotel"></i>
+                    </div>
+                    <h4>{{ _('Premium Hotels') }}</h4>
+                    <p>{{ _('Discover luxury accommodations and boutique hotels in the world\'s most beautiful destinations.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-success">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h4>{{ _('Secure Booking') }}</h4>
+                    <p>{{ _('Book with confidence using our secure payment system and instant confirmation.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-info">
+                        <i class="fas fa-headset"></i>
+                    </div>
+                    <h4>{{ _('24/7 Support') }}</h4>
+                    <p>{{ _('Get help anytime with our round-the-clock customer support team.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-warning">
+                        <i class="fas fa-mobile-alt"></i>
+                    </div>
+                    <h4>{{ _('Mobile Friendly') }}</h4>
+                    <p>{{ _('Book and manage your stays on any device with our responsive platform.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-danger">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h4>{{ _('Verified Reviews') }}</h4>
+                    <p>{{ _('Read authentic reviews from verified guests to make informed decisions.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-secondary">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <h4>{{ _('Best Prices') }}</h4>
+                    <p>{{ _('Find the best deals and exclusive offers on hotels worldwide.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-primary">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h4>{{ _('AI Itinerary Generator') }}</h4>
+                    <p>{{ _('Get personalized 15/30/60-minute itineraries for any city with AI-powered recommendations.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-success">
+                        <i class="fas fa-map-marked-alt"></i>
+                    </div>
+                    <h4>{{ _('Smart Planning') }}</h4>
+                    <p>{{ _('Start from your exact location and get optimized routes for maximum exploration.') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="feature-card text-center h-100">
+                    <div class="feature-icon bg-info">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h4>{{ _('Vehicle Rentals') }}</h4>
+                    <p>{{ _('Rent cars, bikes, and other vehicles for your travel needs with competitive prices.') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Popular Destinations -->
+<section class="destinations-section py-5 bg-light">
+    <div class="container">
+        <div class="row text-center mb-5">
+            <div class="col-12">
+                <h2 class="section-title">{{ _('Popular Destinations') }}</h2>
+                <p class="section-subtitle">{{ _('Explore the world\'s most beautiful places') }}</p>
+            </div>
+        </div>
+        <div class="row g-4">
+            <div class="col-lg-4 col-md-6">
+                <div class="destination-card">
+                    <div class="destination-image">
+                        <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop" 
+                             alt="Paris" class="img-fluid">
+                        <div class="destination-overlay">
+                            <h4>Paris</h4>
+                            <p>{{ _('City of Light') }}</p>
+                            <a href="{{ url_for('hotels') }}?city=Paris" class="btn btn-light btn-sm">
+                                {{ _('Explore Hotels') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="destination-card">
+                    <div class="destination-image">
+                        <img src="https://images.unsplash.com/photo-1539650116574-75c0c6d73c6e?w=400&h=300&fit=crop" 
+                             alt="Tokyo" class="img-fluid">
+                        <div class="destination-overlay">
+                            <h4>Tokyo</h4>
+                            <p>{{ _('Modern Metropolis') }}</p>
+                            <a href="{{ url_for('hotels') }}?city=Tokyo" class="btn btn-light btn-sm">
+                                {{ _('Explore Hotels') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4 col-md-6">
+                <div class="destination-card">
+                    <div class="destination-image">
+                        <img src="https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=400&h=300&fit=crop" 
+                             alt="New York" class="img-fluid">
+                        <div class="destination-overlay">
+                            <h4>New York</h4>
+                            <p>{{ _('The Big Apple') }}</p>
+                            <a href="{{ url_for('hotels') }}?city=New York" class="btn btn-light btn-sm">
+                                {{ _('Explore Hotels') }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section py-5">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <h3 class="stat-number">10,000+</h3>
+                    <p class="stat-label">{{ _('Hotels Worldwide') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <h3 class="stat-number">1M+</h3>
+                    <p class="stat-label">{{ _('Happy Travelers') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <h3 class="stat-number">50+</h3>
+                    <p class="stat-label">{{ _('Countries') }}</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6 mb-4">
+                <div class="stat-item">
+                    <h3 class="stat-number">24/7</h3>
+                    <p class="stat-label">{{ _('Customer Support') }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section py-5 bg-primary text-white">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h3 class="mb-3">{{ _('Ready to Start Your Journey?') }}</h3>
+                <p class="mb-0">{{ _('Join thousands of travelers who trust TourismHub for their accommodation needs.') }}</p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                <a href="{{ url_for('register') }}" class="btn btn-warning btn-lg">
+                    <i class="fas fa-rocket me-2"></i>
+                    {{ _('Get Started Now') }}
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
+
+.hero-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+}
+
+.hero-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.hero-subtitle {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.hero-search-card {
+    position: relative;
+    z-index: 2;
+}
+
+.features-section {
+    padding: 80px 0;
+}
+
+.section-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 1rem;
+}
+
+.section-subtitle {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 0;
+}
+
+.feature-card {
+    padding: 2rem;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    color: white;
+    font-size: 2rem;
+}
+
+.feature-card h4 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #333;
+}
+
+.feature-card p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.destinations-section {
+    padding: 80px 0;
+}
+
+.destination-card {
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease;
+}
+
+.destination-card:hover {
+    transform: translateY(-10px);
+}
+
+.destination-image {
+    position: relative;
+    overflow: hidden;
+}
+
+.destination-image img {
+    width: 100%;
+    height: 250px;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.destination-card:hover .destination-image img {
+    transform: scale(1.1);
+}
+
+.destination-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.3));
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    text-align: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.destination-card:hover .destination-overlay {
+    opacity: 1;
+}
+
+.destination-overlay h4 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.destination-overlay p {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+    opacity: 0.9;
+}
+
+.stats-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.stat-item {
+    padding: 2rem 1rem;
+}
+
+.stat-number {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: #ffc107;
+}
+
+.stat-label {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+.cta-section {
+    padding: 60px 0;
+}
+
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+    
+    .hero-subtitle {
+        font-size: 1rem;
+    }
+    
+    .section-title {
+        font-size: 2rem;
+    }
+    
+    .feature-card {
+        padding: 1.5rem;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set minimum date to today for date inputs
+    const today = new Date().toISOString().split('T')[0];
+    const checkInInput = document.querySelector('input[name="check_in"]');
+    const checkOutInput = document.querySelector('input[name="check_out"]');
+    
+    if (checkInInput) {
+        checkInInput.setAttribute('min', today);
+    }
+    
+    if (checkOutInput) {
+        checkOutInput.setAttribute('min', today);
+    }
+    
+    // Update check-out minimum date when check-in changes
+    if (checkInInput && checkOutInput) {
+        checkInInput.addEventListener('change', function() {
+            const checkInDate = new Date(this.value);
+            const nextDay = new Date(checkInDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            checkOutInput.setAttribute('min', nextDay.toISOString().split('T')[0]);
+        });
+    }
+});
+</script>
+{% endblock %}

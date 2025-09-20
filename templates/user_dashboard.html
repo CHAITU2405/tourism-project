@@ -1,0 +1,1158 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('My Dashboard - TourismHub') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
+                <div class="mb-3 mb-lg-0">
+                    <h2 class="mb-1">
+                        <i class="fas fa-user-circle me-2"></i>
+                        {{ _('Welcome back') }}, {{ current_user.first_name }}!
+                    </h2>
+                    <p class="text-muted mb-0">{{ _('Your personal travel dashboard - manage bookings, wishlist, and plan your next adventure') }}</p>
+                    <div class="alert alert-info mt-2">
+                        <i class="fas fa-info-circle"></i> <strong>{{ _('VoyagerKit Dashboard:') }}</strong> {{ _('Plan your trips, book accommodations, and explore destinations.') }}
+                    </div>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <!-- SOS Emergency Button -->
+                    <button type="button" class="btn btn-danger" id="sosButton" onclick="handleSOS()">
+                        <i class="fas fa-phone-alt me-2"></i>
+                        <span class="d-none d-sm-inline">{{ _('SOS Emergency') }}</span>
+                        <span class="d-inline d-sm-none">{{ _('SOS') }}</span>
+                    </button>
+                    <a href="{{ url_for('hotels') }}" class="btn btn-primary">
+                        <i class="fas fa-search me-2"></i>
+                        <span class="d-none d-sm-inline">{{ _('Find Hotels') }}</span>
+                        <span class="d-inline d-sm-none">{{ _('Hotels') }}</span>
+                    </a>
+                    <a href="{{ url_for('manage_bookings') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-calendar-check me-2"></i>
+                        <span class="d-none d-sm-inline">{{ _('Manage Bookings') }}</span>
+                        <span class="d-inline d-sm-none">{{ _('Bookings') }}</span>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        <span class="d-none d-sm-inline">{{ _('Logout') }}</span>
+                        <span class="d-inline d-sm-none">{{ _('Exit') }}</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-primary">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <h3 class="stats-number">{{ bookings|length }}</h3>
+                    <p class="stats-label">{{ _('Total Bookings') }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-success">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3 class="stats-number">{{ bookings|selectattr('status', 'equalto', 'confirmed')|list|length }}</h3>
+                    <p class="stats-label">Confirmed</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-warning">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="stats-number">{{ bookings|selectattr('status', 'equalto', 'pending')|list|length }}</h3>
+                    <p class="stats-label">Pending</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <div class="stats-icon bg-info">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <h3 class="stats-number">{{ wishlist_items|length if wishlist_items else 0 }}</h3>
+                    <p class="stats-label">Wishlist</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Complaint Box Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-warning">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-comment-dots me-2"></i>
+                        {{ _('Tourism Feedback & Complaints') }}
+                    </h5>
+                    <small>{{ _('Help improve tourism infrastructure by sharing your experiences') }}</small>
+                </div>
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8 col-md-7 mb-3 mb-md-0">
+                            <p class="text-muted mb-3">
+                                {{ _('Faced any issues during your travels? Want to suggest improvements to tourism infrastructure? Share your feedback anonymously to help the government improve tourism services.') }}
+                            </p>
+                            <div class="d-flex flex-column flex-sm-row gap-2">
+                                <button type="button" class="btn btn-warning flex-fill flex-sm-grow-0" data-bs-toggle="modal" data-bs-target="#complaintModal">
+                                    <i class="fas fa-edit me-2"></i>
+                                    {{ _('Submit Feedback') }}
+                                </button>
+                                <button type="button" class="btn btn-outline-info flex-fill flex-sm-grow-0" data-bs-toggle="modal" data-bs-target="#viewComplaintsModal">
+                                    <i class="fas fa-eye me-2"></i>
+                                    {{ _('View Public Complaints') }}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-md-5 text-center">
+                            <div class="complaint-stats p-3 bg-light rounded">
+                                <h4 class="text-warning mb-1">{{ total_complaints or 0 }}</h4>
+                                <p class="text-muted mb-0">{{ _('Total Complaints') }}</p>
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    {{ _('All Anonymous') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Bookings Section -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center">
+                        <h5 class="mb-2 mb-sm-0">
+                            <i class="fas fa-calendar-alt me-2"></i>
+                            {{ _('My Bookings') }}
+                        </h5>
+                        <div class="btn-group" role="group">
+                            <input type="radio" class="btn-check" name="bookingFilter" id="allBookings" autocomplete="off" checked>
+                            <label class="btn btn-outline-primary btn-sm" for="allBookings">{{ _('All') }}</label>
+
+                            <input type="radio" class="btn-check" name="bookingFilter" id="upcomingBookings" autocomplete="off">
+                            <label class="btn btn-outline-primary btn-sm" for="upcomingBookings">{{ _('Upcoming') }}</label>
+
+                            <input type="radio" class="btn-check" name="bookingFilter" id="pastBookings" autocomplete="off">
+                            <label class="btn btn-outline-primary btn-sm" for="pastBookings">{{ _('Past') }}</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if hotel_bookings or vehicle_bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('Type') }}</th>
+                                        <th>{{ _('Service') }}</th>
+                                        <th class="d-none d-md-table-cell">{{ _('Dates') }}</th>
+                                        <th class="d-none d-lg-table-cell">{{ _('Details') }}</th>
+                                        <th>{{ _('Amount') }}</th>
+                                        <th>{{ _('Status') }}</th>
+                                        <th>{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Hotel Bookings -->
+                                    {% for booking in hotel_bookings %}
+                                    <tr class="booking-row hotel-booking" data-status="{{ booking.status }}" data-date="{{ booking.check_in }}" data-type="hotel">
+                                        <td>
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-bed me-1"></i>Hotel
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if booking.hotel.image %}
+                                                    <img src="{{ url_for('static', filename=booking.hotel.image) }}" 
+                                                         class="rounded me-3 d-none d-sm-block" alt="{{ booking.hotel.name }}" 
+                                                         style="width: 50px; height: 50px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="rounded me-3 bg-light d-flex align-items-center justify-content-center d-none d-sm-block" 
+                                                         style="width: 50px; height: 50px;">
+                                                        <i class="fas fa-bed text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ booking.hotel.name }}</h6>
+                                                    <small class="text-muted">{{ booking.hotel.city }}</small>
+                                                    <div class="d-md-none mt-1">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-calendar me-1"></i>
+                                                            {{ booking.check_in.strftime('%b %d') }} - {{ booking.check_out.strftime('%b %d, %Y') }}
+                                                        </small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="d-none d-md-table-cell">
+                                            <div>
+                                                <strong>{{ booking.check_in.strftime('%b %d') }}</strong> - 
+                                                <strong>{{ booking.check_out.strftime('%b %d, %Y') }}</strong>
+                                            </div>
+                                            <small class="text-muted">{{ (booking.check_out - booking.check_in).days }} {{ _('nights') }}</small>
+                                        </td>
+                                        <td class="d-none d-lg-table-cell">
+                                            <div>{{ booking.guests }} {{ _('guest') }}{{ 's' if booking.guests > 1 else '' }}</div>
+                                            <small class="text-muted">{{ booking.rooms }} {{ _('room') }}{{ 's' if booking.rooms > 1 else '' }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>₹{{ "%.2f"|format(booking.total_amount) }}</strong>
+                                            {% if booking.booking_reference %}
+                                            <br><small class="text-muted">Ref: {{ booking.booking_reference }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if booking.status == 'confirmed' %}
+                                                <span class="badge bg-success">{{ _('Confirmed') }}</span>
+                                            {% elif booking.status == 'pending' %}
+                                                <span class="badge bg-warning">{{ _('Pending') }}</span>
+                                            {% elif booking.status == 'cancelled' %}
+                                                <span class="badge bg-danger">{{ _('Cancelled') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ booking.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('booking_confirmation', booking_id=booking.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if booking.status in ['pending', 'confirmed'] %}
+                                                <a href="{{ url_for('cancel_booking', booking_id=booking.id) }}" 
+                                                   class="btn btn-sm btn-outline-danger" title="Cancel"
+                                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                    
+                                    <!-- Vehicle Bookings -->
+                                    {% for booking in vehicle_bookings %}
+                                    <tr class="booking-row vehicle-booking" data-status="{{ booking.status }}" data-date="{{ booking.pickup_date }}" data-type="vehicle">
+                                        <td>
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-car me-1"></i>Vehicle
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                {% if booking.vehicle.images %}
+                                                    {% set vehicle_images = booking.vehicle.images|from_json %}
+                                                    {% if vehicle_images and vehicle_images[0] %}
+                                                        <img src="{{ url_for('static', filename=vehicle_images[0]) }}" 
+                                                             class="rounded me-3" alt="{{ booking.vehicle.make }} {{ booking.vehicle.model }}" 
+                                                             style="width: 50px; height: 50px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="rounded me-3 bg-light d-flex align-items-center justify-content-center" 
+                                                             style="width: 50px; height: 50px;">
+                                                            <i class="fas fa-car text-muted"></i>
+                                                        </div>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <div class="rounded me-3 bg-light d-flex align-items-center justify-content-center" 
+                                                         style="width: 50px; height: 50px;">
+                                                        <i class="fas fa-car text-muted"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-0">{{ booking.vehicle.make }} {{ booking.vehicle.model }}</h6>
+                                                    <small class="text-muted">{{ booking.rental_company.name }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div>
+                                                <strong>{{ booking.pickup_date.strftime('%b %d') }}</strong> - 
+                                                <strong>{{ booking.return_date.strftime('%b %d, %Y') }}</strong>
+                                            </div>
+                                            <small class="text-muted">{{ (booking.return_date - booking.pickup_date).days }} days</small>
+                                        </td>
+                                        <td>
+                                            <div>{{ booking.vehicle.seating_capacity }} seats</div>
+                                            <small class="text-muted">{{ booking.vehicle.vehicle_type.title() }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>₹{{ "%.2f"|format(booking.total_amount) }}</strong>
+                                            {% if booking.booking_reference %}
+                                            <br><small class="text-muted">Ref: {{ booking.booking_reference }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if booking.status == 'confirmed' %}
+                                                <span class="badge bg-success">{{ _('Confirmed') }}</span>
+                                            {% elif booking.status == 'pending' %}
+                                                <span class="badge bg-warning">{{ _('Pending') }}</span>
+                                            {% elif booking.status == 'cancelled' %}
+                                                <span class="badge bg-danger">{{ _('Cancelled') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ booking.status.title() }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{{ url_for('vehicle_booking_confirmation', booking_id=booking.id) }}" 
+                                                   class="btn btn-sm btn-outline-primary" title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if booking.status in ['pending', 'confirmed'] %}
+                                                <a href="#" class="btn btn-sm btn-outline-danger" title="Cancel"
+                                                   onclick="return confirm('Are you sure you want to cancel this booking?')">
+                                                    <i class="fas fa-times"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="mt-3">No bookings yet</h5>
+                            <p class="text-muted">Start exploring and book your first hotel or vehicle!</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{{ url_for('hotels') }}" class="btn btn-primary">
+                                    <i class="fas fa-bed me-2"></i>
+                                    Find Hotels
+                                </a>
+                                <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-success">
+                                    <i class="fas fa-car me-2"></i>
+                                    Find Vehicles
+                                </a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Wishlist -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-heart me-2"></i>
+                        My Wishlist
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if wishlist_items %}
+                        {% for item in wishlist_items[:3] %}
+                        <div class="d-flex align-items-center mb-3">
+                            <img src="https://via.placeholder.com/40x40/007bff/ffffff?text={{ item.hotel.name[:2] }}" 
+                                 class="rounded me-3" alt="{{ item.hotel.name }}">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-0">{{ item.hotel.name }}</h6>
+                                <small class="text-muted">{{ item.hotel.city }}</small>
+                            </div>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('hotel_detail', hotel_id=item.hotel.id) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('remove_from_wishlist', hotel_id=item.hotel.id) }}" 
+                                   class="btn btn-sm btn-outline-danger">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% if wishlist_items|length > 3 %}
+                        <div class="text-center">
+                            <small class="text-muted">+{{ wishlist_items|length - 3 }} more items</small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-heart text-muted"></i>
+                            <p class="text-muted mb-0">No items in wishlist</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt me-2"></i>
+                        Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('hotels') }}" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>
+                            Find Hotels
+                        </a>
+                        <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-car me-2"></i>
+                            Rent a Vehicle
+                        </a>
+                        <a href="{{ url_for('itinerary_generator') }}" class="btn btn-outline-success">
+                            <i class="fas fa-route me-2"></i>
+                            Plan Trip
+                        </a>
+                        <button class="btn btn-outline-secondary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>
+                            Print Bookings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 15px;
+    color: white;
+    font-size: 1.5rem;
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stats-label {
+    color: #6c757d;
+    margin-bottom: 0;
+}
+
+.booking-row {
+    transition: background-color 0.2s ease;
+}
+
+.booking-row:hover {
+    background-color: #f8f9fa;
+}
+
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+/* SOS Button Styling */
+#sosButton {
+    animation: pulse 2s infinite;
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+#sosButton:hover {
+    animation: none;
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+}
+
+.emergency-info {
+    border-left: 4px solid #dc3545;
+    background-color: #f8d7da;
+}
+
+/* Responsive Design Improvements */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem;
+    }
+    
+    .stats-card .card-body {
+        padding: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 1.5rem;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .complaint-stats {
+        margin-top: 1rem;
+    }
+    
+    .d-flex.gap-2 {
+        gap: 0.5rem !important;
+    }
+}
+
+@media (max-width: 576px) {
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.8rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+}
+
+/* Improved hover effects */
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* Better spacing for mobile */
+@media (max-width: 768px) {
+    .row {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+    
+    .col-12,
+    .col-lg-8,
+    .col-lg-4 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media print {
+    .btn, .card-header, .col-lg-4 {
+        display: none !important;
+    }
+    .container-fluid {
+        max-width: none !important;
+    }
+}
+</style>
+
+<script>
+// SOS Emergency Functionality
+function handleSOS() {
+    // Get user's current location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Get state from coordinates using reverse geocoding
+                getStateFromCoordinates(lat, lng);
+            },
+            function(error) {
+                // If location access fails, show manual state selection
+                showStateSelection();
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    } else {
+        // Geolocation not supported, show manual state selection
+        showStateSelection();
+    }
+}
+
+function getStateFromCoordinates(lat, lng) {
+    // Use a simple reverse geocoding service to get state
+    fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`)
+        .then(response => response.json())
+        .then(data => {
+            const state = data.principalSubdivision || data.locality || 'Unknown';
+            const emergencyNumber = getEmergencyNumber(state);
+            dialEmergencyNumber(emergencyNumber, state);
+        })
+        .catch(error => {
+            console.error('Error getting location:', error);
+            showStateSelection();
+        });
+}
+
+function getEmergencyNumber(state) {
+    // Emergency numbers for different states/countries
+    const emergencyNumbers = {
+        // India
+        'Maharashtra': '100',
+        'Delhi': '100',
+        'Karnataka': '100',
+        'Tamil Nadu': '100',
+        'Kerala': '100',
+        'Gujarat': '100',
+        'Rajasthan': '100',
+        'Uttar Pradesh': '100',
+        'West Bengal': '100',
+        'Andhra Pradesh': '100',
+        'Telangana': '100',
+        'Punjab': '100',
+        'Haryana': '100',
+        'Madhya Pradesh': '100',
+        'Bihar': '100',
+        'Odisha': '100',
+        'Assam': '100',
+        'Jharkhand': '100',
+        'Chhattisgarh': '100',
+        'Himachal Pradesh': '100',
+        'Uttarakhand': '100',
+        'Goa': '100',
+        'Manipur': '100',
+        'Meghalaya': '100',
+        'Mizoram': '100',
+        'Nagaland': '100',
+        'Sikkim': '100',
+        'Tripura': '100',
+        'Arunachal Pradesh': '100',
+        'Jammu and Kashmir': '100',
+        'Ladakh': '100',
+        'Andaman and Nicobar Islands': '100',
+        'Chandigarh': '100',
+        'Dadra and Nagar Haveli': '100',
+        'Daman and Diu': '100',
+        'Lakshadweep': '100',
+        'Puducherry': '100',
+        
+        // International
+        'United States': '911',
+        'United Kingdom': '999',
+        'Canada': '911',
+        'Australia': '000',
+        'Germany': '110',
+        'France': '17',
+        'Spain': '091',
+        'Italy': '113',
+        'Japan': '110',
+        'China': '110',
+        'Brazil': '190',
+        'Mexico': '911',
+        'Russia': '102',
+        'South Africa': '10111',
+        'Egypt': '122',
+        'Nigeria': '199',
+        'Kenya': '999',
+        'Morocco': '19',
+        'Turkey': '155',
+        'Saudi Arabia': '999',
+        'UAE': '999',
+        'Israel': '100',
+        'Thailand': '191',
+        'Singapore': '999',
+        'Malaysia': '999',
+        'Indonesia': '110',
+        'Philippines': '117',
+        'Vietnam': '113',
+        'South Korea': '112',
+        'New Zealand': '111',
+        'Argentina': '101',
+        'Chile': '133',
+        'Colombia': '123',
+        'Peru': '105',
+        'Venezuela': '171',
+        'Ecuador': '101',
+        'Bolivia': '110',
+        'Paraguay': '911',
+        'Uruguay': '911',
+        'Guyana': '911',
+        'Suriname': '115',
+        'French Guiana': '17'
+    };
+    
+    // Try to find exact match first
+    if (emergencyNumbers[state]) {
+        return emergencyNumbers[state];
+    }
+    
+    // Try to find partial match
+    for (const [key, number] of Object.entries(emergencyNumbers)) {
+        if (state.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(state.toLowerCase())) {
+            return number;
+        }
+    }
+    
+    // Default to 100 (India) or 911 (International)
+    return '100';
+}
+
+function dialEmergencyNumber(number, state) {
+    const confirmMessage = `Emergency Alert!\n\nYou are about to call the emergency police number for ${state}.\n\nEmergency Number: ${number}\n\nDo you want to proceed?`;
+    
+    if (confirm(confirmMessage)) {
+        // Create phone link
+        const phoneLink = `tel:${number}`;
+        
+        // Try to open phone dialer
+        window.location.href = phoneLink;
+        
+        // Show additional emergency information
+        showEmergencyInfo(state, number);
+    }
+}
+
+function showEmergencyInfo(state, number) {
+    const emergencyInfo = `
+        <div class="alert alert-danger mt-3" role="alert">
+            <h5><i class="fas fa-exclamation-triangle"></i> Emergency Information</h5>
+            <p><strong>State/Region:</strong> ${state}</p>
+            <p><strong>Emergency Number:</strong> ${number}</p>
+            <p><strong>Additional Numbers:</strong></p>
+            <ul>
+                <li>Police: ${number}</li>
+                <li>Ambulance: 108 (India) / 911 (International)</li>
+                <li>Fire: 101 (India) / 911 (International)</li>
+            </ul>
+            <p class="mb-0"><strong>Stay safe and provide your exact location when calling!</strong></p>
+        </div>
+    `;
+    
+    // Insert emergency info after the SOS button
+    const sosButton = document.getElementById('sosButton');
+    const existingAlert = document.querySelector('.alert-danger');
+    if (existingAlert) {
+        existingAlert.remove();
+    }
+    sosButton.insertAdjacentHTML('afterend', emergencyInfo);
+}
+
+function showStateSelection() {
+    const states = [
+        'Maharashtra', 'Delhi', 'Karnataka', 'Tamil Nadu', 'Kerala', 'Gujarat', 'Rajasthan',
+        'Uttar Pradesh', 'West Bengal', 'Andhra Pradesh', 'Telangana', 'Punjab', 'Haryana',
+        'Madhya Pradesh', 'Bihar', 'Odisha', 'Assam', 'Jharkhand', 'Chhattisgarh',
+        'Himachal Pradesh', 'Uttarakhand', 'Goa', 'Manipur', 'Meghalaya', 'Mizoram',
+        'Nagaland', 'Sikkim', 'Tripura', 'Arunachal Pradesh', 'Jammu and Kashmir',
+        'Ladakh', 'Andaman and Nicobar Islands', 'Chandigarh', 'Dadra and Nagar Haveli',
+        'Daman and Diu', 'Lakshadweep', 'Puducherry', 'Other/International'
+    ];
+    
+    const stateList = states.map(state => `<option value="${state}">${state}</option>`).join('');
+    
+    const stateSelection = `
+        <div class="modal fade" id="stateModal" tabindex="-1" aria-labelledby="stateModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="stateModalLabel">
+                            <i class="fas fa-exclamation-triangle"></i> Emergency - Select Your Location
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Please select your current state/region to get the correct emergency number:</p>
+                        <select class="form-select" id="stateSelect">
+                            <option value="">Select your state/region</option>
+                            ${stateList}
+                        </select>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-danger" onclick="proceedWithSelectedState()">Call Emergency</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if any
+    const existingModal = document.getElementById('stateModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', stateSelection);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('stateModal'));
+    modal.show();
+}
+
+function proceedWithSelectedState() {
+    const selectedState = document.getElementById('stateSelect').value;
+    if (selectedState) {
+        const emergencyNumber = getEmergencyNumber(selectedState);
+        dialEmergencyNumber(emergencyNumber, selectedState);
+        
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('stateModal'));
+        modal.hide();
+    } else {
+        alert('Please select your state/region first.');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const filterButtons = document.querySelectorAll('input[name="bookingFilter"]');
+    const bookingRows = document.querySelectorAll('.booking-row');
+    
+    filterButtons.forEach(button => {
+        button.addEventListener('change', function() {
+            const filter = this.id;
+            const today = new Date();
+            
+            bookingRows.forEach(row => {
+                let show = true;
+                
+                if (filter === 'upcomingBookings') {
+                    const bookingDate = new Date(row.dataset.date);
+                    show = bookingDate >= today;
+                } else if (filter === 'pastBookings') {
+                    const bookingDate = new Date(row.dataset.date);
+                    show = bookingDate < today;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    });
+});
+
+// Complaint Box Functionality
+function loadComplaints() {
+    fetch('/api/complaints')
+        .then(response => response.json())
+        .then(data => {
+            displayComplaints(data.complaints);
+        })
+        .catch(error => {
+            console.error('Error loading complaints:', error);
+            document.getElementById('complaintsList').innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {{ _('Unable to load complaints at this time. Please try again later.') }}
+                </div>
+            `;
+        });
+}
+
+function displayComplaints(complaints) {
+    const container = document.getElementById('complaintsList');
+    
+    if (complaints.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-4">
+                <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">{{ _('No complaints available') }}</h5>
+                <p class="text-muted">{{ _('Be the first to share your tourism feedback!') }}</p>
+            </div>
+        `;
+        return;
+    }
+    
+    const complaintsHTML = complaints.map(complaint => `
+        <div class="card mb-3 complaint-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h6 class="card-title mb-0">${complaint.title}</h6>
+                    <span class="badge bg-${getSeverityColor(complaint.severity)}">${getSeverityText(complaint.severity)}</span>
+                </div>
+                <p class="card-text text-muted small mb-2">
+                    <i class="fas fa-map-marker-alt me-1"></i>${complaint.location}
+                    <span class="ms-3"><i class="fas fa-tag me-1"></i>${getTypeText(complaint.type)}</span>
+                    <span class="ms-3"><i class="fas fa-clock me-1"></i>${formatDate(complaint.created_at)}</span>
+                </p>
+                <p class="card-text">${complaint.description}</p>
+                ${complaint.suggestions ? `<div class="alert alert-light"><strong>{{ _('Suggestions:') }}</strong> ${complaint.suggestions}</div>` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    container.innerHTML = complaintsHTML;
+}
+
+function getSeverityColor(severity) {
+    const colors = {
+        'low': 'success',
+        'medium': 'warning',
+        'high': 'danger',
+        'critical': 'dark'
+    };
+    return colors[severity] || 'secondary';
+}
+
+function getSeverityText(severity) {
+    const texts = {
+        'low': '{{ _("Low") }}',
+        'medium': '{{ _("Medium") }}',
+        'high': '{{ _("High") }}',
+        'critical': '{{ _("Critical") }}'
+    };
+    return texts[severity] || severity;
+}
+
+function getTypeText(type) {
+    const texts = {
+        'transportation': '{{ _("Transportation") }}',
+        'accommodation': '{{ _("Accommodation") }}',
+        'safety': '{{ _("Safety") }}',
+        'infrastructure': '{{ _("Infrastructure") }}',
+        'services': '{{ _("Services") }}',
+        'pricing': '{{ _("Pricing") }}',
+        'communication': '{{ _("Communication") }}',
+        'other': '{{ _("Other") }}'
+    };
+    return texts[type] || type;
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
+
+// Event listeners for complaint modals
+document.addEventListener('DOMContentLoaded', function() {
+    // Load complaints when modal is shown
+    const viewComplaintsModal = document.getElementById('viewComplaintsModal');
+    if (viewComplaintsModal) {
+        viewComplaintsModal.addEventListener('show.bs.modal', function() {
+            loadComplaints();
+        });
+    }
+    
+    // Filter and sort functionality
+    const filterSelect = document.getElementById('filterComplaints');
+    const sortSelect = document.getElementById('sortComplaints');
+    
+    if (filterSelect) {
+        filterSelect.addEventListener('change', function() {
+            // Implement filtering logic here
+            loadComplaints();
+        });
+    }
+    
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            // Implement sorting logic here
+            loadComplaints();
+        });
+    }
+});
+</script>
+
+<!-- Complaint Submission Modal -->
+<div class="modal fade" id="complaintModal" tabindex="-1" aria-labelledby="complaintModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="complaintModalLabel">
+                    <i class="fas fa-comment-dots me-2"></i>
+                    {{ _('Submit Tourism Feedback/Complaint') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="complaintForm" method="POST" action="{{ url_for('submit_complaint') }}">
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>{{ _('Anonymous Submission:') }}</strong> {{ _('Your complaint will be submitted anonymously. No personal information will be stored.') }}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="complaint_type" class="form-label">{{ _('Issue Type') }} *</label>
+                            <select class="form-select" id="complaint_type" name="complaint_type" required>
+                                <option value="">{{ _('Select issue type') }}</option>
+                                <option value="transportation">{{ _('Transportation Issues') }}</option>
+                                <option value="accommodation">{{ _('Accommodation Problems') }}</option>
+                                <option value="safety">{{ _('Safety Concerns') }}</option>
+                                <option value="infrastructure">{{ _('Infrastructure Problems') }}</option>
+                                <option value="services">{{ _('Tourist Services') }}</option>
+                                <option value="pricing">{{ _('Pricing Issues') }}</option>
+                                <option value="communication">{{ _('Language/Communication') }}</option>
+                                <option value="other">{{ _('Other Issues') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="location" class="form-label">{{ _('Location/State') }} *</label>
+                            <input type="text" class="form-control" id="location" name="location" 
+                                   placeholder="{{ _('e.g., Mumbai, Maharashtra') }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="complaint_title" class="form-label">{{ _('Title') }} *</label>
+                        <input type="text" class="form-control" id="complaint_title" name="complaint_title" 
+                               placeholder="{{ _('Brief description of the issue') }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="complaint_description" class="form-label">{{ _('Detailed Description') }} *</label>
+                        <textarea class="form-control" id="complaint_description" name="complaint_description" 
+                                  rows="5" placeholder="{{ _('Please describe the issue in detail. Include specific problems, suggestions for improvement, and any relevant details.') }}" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="severity" class="form-label">{{ _('Severity Level') }}</label>
+                            <select class="form-select" id="severity" name="severity">
+                                <option value="low">{{ _('Low - Minor inconvenience') }}</option>
+                                <option value="medium" selected>{{ _('Medium - Significant issue') }}</option>
+                                <option value="high">{{ _('High - Major problem') }}</option>
+                                <option value="critical">{{ _('Critical - Safety concern') }}</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="suggestions" class="form-label">{{ _('Suggestions for Improvement') }}</label>
+                            <textarea class="form-control" id="suggestions" name="suggestions" 
+                                      rows="3" placeholder="{{ _('Any suggestions for how this issue could be resolved?') }}"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="public_visibility" name="public_visibility" checked>
+                        <label class="form-check-label" for="public_visibility">
+                            {{ _('Make this complaint visible to other tourists (anonymously)') }}
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Cancel') }}</button>
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        {{ _('Submit Complaint') }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- View Complaints Modal -->
+<div class="modal fade" id="viewComplaintsModal" tabindex="-1" aria-labelledby="viewComplaintsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="viewComplaintsModalLabel">
+                    <i class="fas fa-eye me-2"></i>
+                    {{ _('Public Tourism Complaints & Feedback') }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <select class="form-select" id="filterComplaints">
+                            <option value="">{{ _('Filter by issue type') }}</option>
+                            <option value="transportation">{{ _('Transportation Issues') }}</option>
+                            <option value="accommodation">{{ _('Accommodation Problems') }}</option>
+                            <option value="safety">{{ _('Safety Concerns') }}</option>
+                            <option value="infrastructure">{{ _('Infrastructure Problems') }}</option>
+                            <option value="services">{{ _('Tourist Services') }}</option>
+                            <option value="pricing">{{ _('Pricing Issues') }}</option>
+                            <option value="communication">{{ _('Language/Communication') }}</option>
+                            <option value="other">{{ _('Other Issues') }}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <select class="form-select" id="sortComplaints">
+                            <option value="recent">{{ _('Most Recent') }}</option>
+                            <option value="oldest">{{ _('Oldest First') }}</option>
+                            <option value="severity">{{ _('By Severity') }}</option>
+                            <option value="location">{{ _('By Location') }}</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="complaintsList">
+                    <!-- Complaints will be loaded here via JavaScript -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">{{ _('Loading...') }}</span>
+                        </div>
+                        <p class="mt-2 text-muted">{{ _('Loading complaints...') }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

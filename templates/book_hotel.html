@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Book') }} {{ hotel.name }} - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Hotel Information -->
+            <div class="card shadow-custom mb-4">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <img src="https://via.placeholder.com/300x200/007bff/ffffff?text={{ hotel.name }}" 
+                                 class="img-fluid rounded" alt="{{ hotel.name }}">
+                        </div>
+                        <div class="col-md-8">
+                            <h2>{{ hotel.name }}</h2>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="hotel-rating me-3">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= hotel.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="badge bg-primary">{{ hotel.category }} {{ _('Hotel') }}</span>
+                                {% if hotel.rating > 0 %}
+                                    <span class="badge bg-success">{{ "%.1f"|format(hotel.rating) }} ({{ hotel.total_reviews }} reviews)</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No ratings yet</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-map-marker-alt"></i> {{ hotel.address }}, {{ hotel.city }}, {{ hotel.state }}
+                            </p>
+                            <p>{{ hotel.description }}</p>
+                            
+                            <!-- Amenities -->
+                            {% if hotel.amenities %}
+                                <div class="mt-3">
+                                    <h6>Amenities:</h6>
+                                    <div class="row">
+                                        {% set amenities = hotel.amenities|from_json %}
+                                        {% for amenity in amenities[:6] %}
+                                            <div class="col-md-6">
+                                                <i class="fas fa-check text-success me-2"></i>{{ amenity }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% if amenities|length > 6 %}
+                                        <small class="text-muted">+{{ amenities|length - 6 }} more amenities</small>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Booking Form -->
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-calendar-check"></i> Complete Your Booking</h4>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="needs-validation" novalidate>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="check_in" class="form-label">Check-in Date *</label>
+                                <input type="date" class="form-control" id="check_in" name="check_in" required>
+                                <div class="invalid-feedback">
+                                    Please select a check-in date.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="check_out" class="form-label">Check-out Date *</label>
+                                <input type="date" class="form-control" id="check_out" name="check_out" required>
+                                <div class="invalid-feedback">
+                                    Please select a check-out date.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="rooms" class="form-label">Number of Rooms *</label>
+                                <select class="form-control" id="rooms" name="rooms" required>
+                                    {% for i in range(1, min(available_rooms + 1, 6)) %}
+                                        <option value="{{ i }}">{{ i }} room{{ 's' if i > 1 else '' }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">
+                                    <span id="available_rooms">{{ available_rooms }}</span> rooms available
+                                </small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guests" class="form-label">Number of Guests *</label>
+                                <select class="form-control" id="guests" name="guests" required>
+                                    {% for i in range(1, 11) %}
+                                        <option value="{{ i }}">{{ i }} guest{{ 's' if i > 1 else '' }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="special_requests" class="form-label">Special Requests (Optional)</label>
+                            <textarea class="form-control" id="special_requests" name="special_requests" rows="3" 
+                                      placeholder="Any special requests, dietary requirements, accessibility needs, etc."></textarea>
+                        </div>
+
+                        <!-- Price Summary -->
+                        <div class="border-top pt-3 mb-4">
+                            <h5>Booking Summary</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Price per night:</span>
+                                        <span>${{ "%.2f"|format(hotel.price_per_night) }}</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Number of nights:</span>
+                                        <span id="nights">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Number of rooms:</span>
+                                        <span id="selected_rooms">1</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Subtotal:</span>
+                                        <span id="subtotal">$0.00</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Taxes & Fees:</span>
+                                        <span id="taxes">$0.00</span>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between fw-bold">
+                                        <span>Total Amount:</span>
+                                        <span id="total_price">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" class="text-primary">Terms and Conditions</a> and <a href="#" class="text-primary">Cancellation Policy</a>
+                                </label>
+                                <div class="invalid-feedback">
+                                    You must agree to the terms and conditions.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-credit-card"></i> Confirm Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Booking Summary Sidebar -->
+        <div class="col-lg-4">
+            <div class="card shadow-custom sticky-top" style="top: 20px;">
+                <div class="card-header">
+                    <h5 class="mb-0">Booking Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-3">
+                        <img src="https://via.placeholder.com/200x120/007bff/ffffff?text={{ hotel.name }}" 
+                             class="img-fluid rounded" alt="{{ hotel.name }}">
+                    </div>
+                    
+                    <h6>{{ hotel.name }}</h6>
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-map-marker-alt"></i> {{ hotel.city }}, {{ hotel.state }}
+                    </p>
+                    
+                    <div class="border-top pt-3">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Check-in:</span>
+                            <span id="summary_checkin">Select date</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Check-out:</span>
+                            <span id="summary_checkout">Select date</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Duration:</span>
+                            <span id="summary_nights">0 nights</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Rooms:</span>
+                            <span id="summary_rooms">1 room</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Guests:</span>
+                            <span id="summary_guests">1 guest</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between fw-bold">
+                            <span>Total:</span>
+                            <span id="summary_total">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Important Information -->
+                    <div class="mt-4 p-3 bg-light rounded">
+                        <h6><i class="fas fa-info-circle"></i> Important Information</h6>
+                        <ul class="list-unstyled small">
+                            <li><i class="fas fa-check text-success me-2"></i>Free cancellation up to 24 hours before check-in</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Instant booking confirmation</li>
+                            <li><i class="fas fa-check text-success me-2"></i>24/7 customer support</li>
+                            <li><i class="fas fa-check text-success me-2"></i>Secure payment processing</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('check_in');
+    const checkOutInput = document.getElementById('check_out');
+    const roomsSelect = document.getElementById('rooms');
+    const guestsSelect = document.getElementById('guests');
+    const pricePerNight = {{ hotel.price_per_night }};
+    const hotelId = {{ hotel.id }};
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.setAttribute('min', today);
+    
+    function updateRoomAvailability() {
+        const checkIn = checkInInput.value;
+        const checkOut = checkOutInput.value;
+        
+        if (checkIn && checkOut) {
+            // Make AJAX request to check availability
+            fetch(`/api/room-availability/${hotelId}?check_in=${checkIn}&check_out=${checkOut}`)
+                .then(response => response.json())
+                .then(data => {
+                    const availableRooms = data.available_rooms;
+                    document.getElementById('available_rooms').textContent = availableRooms;
+                    
+                    // Update room options
+                    const roomsSelect = document.getElementById('rooms');
+                    const currentValue = roomsSelect.value;
+                    roomsSelect.innerHTML = '';
+                    
+                    for (let i = 1; i <= Math.min(availableRooms, 6); i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i + ' room' + (i > 1 ? 's' : '');
+                        if (i == currentValue) option.selected = true;
+                        roomsSelect.appendChild(option);
+                    }
+                    
+                    // Update booking summary
+                    updateBookingSummary();
+                })
+                .catch(error => {
+                    console.error('Error checking room availability:', error);
+                });
+        }
+    }
+    
+    function updateBookingSummary() {
+        const checkIn = new Date(checkInInput.value);
+        const checkOut = new Date(checkOutInput.value);
+        const rooms = parseInt(roomsSelect.value);
+        const guests = parseInt(guestsSelect.value);
+        
+        if (checkIn && checkOut && checkOut > checkIn && rooms > 0) {
+            const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+            const subtotal = nights * rooms * pricePerNight;
+            const taxes = subtotal * 0.1; // 10% tax
+            const total = subtotal + taxes;
+            
+            // Update main summary
+            document.getElementById('nights').textContent = nights;
+            document.getElementById('selected_rooms').textContent = rooms;
+            document.getElementById('subtotal').textContent = '$' + subtotal.toFixed(2);
+            document.getElementById('taxes').textContent = '$' + taxes.toFixed(2);
+            document.getElementById('total_price').textContent = '$' + total.toFixed(2);
+            
+            // Update sidebar summary
+            document.getElementById('summary_checkin').textContent = checkIn.toLocaleDateString();
+            document.getElementById('summary_checkout').textContent = checkOut.toLocaleDateString();
+            document.getElementById('summary_nights').textContent = nights + ' night' + (nights > 1 ? 's' : '');
+            document.getElementById('summary_rooms').textContent = rooms + ' room' + (rooms > 1 ? 's' : '');
+            document.getElementById('summary_guests').textContent = guests + ' guest' + (guests > 1 ? 's' : '');
+            document.getElementById('summary_total').textContent = '$' + total.toFixed(2);
+        } else {
+            // Reset to default values
+            document.getElementById('nights').textContent = '0';
+            document.getElementById('selected_rooms').textContent = '1';
+            document.getElementById('subtotal').textContent = '$0.00';
+            document.getElementById('taxes').textContent = '$0.00';
+            document.getElementById('total_price').textContent = '$0.00';
+            
+            document.getElementById('summary_checkin').textContent = 'Select date';
+            document.getElementById('summary_checkout').textContent = 'Select date';
+            document.getElementById('summary_nights').textContent = '0 nights';
+            document.getElementById('summary_rooms').textContent = '1 room';
+            document.getElementById('summary_guests').textContent = '1 guest';
+            document.getElementById('summary_total').textContent = '$0.00';
+        }
+    }
+    
+    checkInInput.addEventListener('change', function() {
+        const checkInDate = new Date(this.value);
+        const nextDay = new Date(checkInDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        checkOutInput.setAttribute('min', nextDay.toISOString().split('T')[0]);
+        updateRoomAvailability();
+    });
+    
+    checkOutInput.addEventListener('change', function() {
+        updateRoomAvailability();
+    });
+    
+    roomsSelect.addEventListener('change', updateBookingSummary);
+    guestsSelect.addEventListener('change', updateBookingSummary);
+    
+    // Initialize with default values
+    updateBookingSummary();
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+{% endblock %}

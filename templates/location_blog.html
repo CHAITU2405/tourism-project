@@ -1,0 +1,759 @@
+{% extends "base.html" %}
+
+{% block title %}Location Blog - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h2 class="mb-0"><i class="fas fa-blog"></i> AI-Powered Location Blog</h2>
+                    <p class="text-muted mb-0">Get comprehensive information about any destination with our intelligent travel guide</p>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Search Form -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <form method="POST" class="needs-validation" novalidate>
+                                <div class="input-group">
+                                    <input type="text" 
+                                           class="form-control form-control-lg" 
+                                           name="location" 
+                                           placeholder="Enter location name (e.g., Taj Mahal, Goa, Kerala, Paris, Tokyo...)" 
+                                           value="{{ location if location else '' }}"
+                                           required>
+                                    <button class="btn btn-primary btn-lg" type="submit" id="generateBtn">
+                                        <i class="fas fa-robot me-2"></i>Generate Blog
+                                    </button>
+                                </div>
+                                <div class="form-text mt-2">
+                                    <i class="fas fa-magic text-primary"></i>
+                                    Our AI will create a comprehensive travel guide with history, attractions, rules, and everything you need to know
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div id="loadingSpinner" class="text-center" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Generating blog...</span>
+                        </div>
+                        <p class="mt-2 text-muted">AI is generating your comprehensive travel guide...</p>
+                    </div>
+
+                    <!-- Error Messages -->
+                    {% if error %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>{{ error }}
+                        <hr>
+                        <small>
+                            <strong>Troubleshooting tips:</strong><br>
+                            • Check your internet connection<br>
+                            • Try a different location name<br>
+                            • The AI service might be temporarily unavailable<br>
+                            • Contact support if the issue persists
+                        </small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Blog Content -->
+                    {% if found and blog_content %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="alert alert-success" role="alert">
+                                <h5 class="alert-heading">
+                                    <i class="fas fa-map-marker-alt me-2"></i>
+                                    Complete Travel Guide for {{ location.title() }}
+                                </h5>
+                                <p class="mb-0">AI-generated comprehensive information about your destination</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Blog Content Display -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <div class="blog-content" id="blogContent">
+                                        <!-- Content will be typed here -->
+                                    </div>
+                                    <div id="typingIndicator" class="typing-indicator" style="display: none;">
+                                        <div class="typing-dots">
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                        </div>
+                                        <span class="typing-text">AI is writing your travel guide...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hidden data for JavaScript -->
+                    <script type="application/json" id="blogData">
+                        {{ blog_content|tojson if blog_content else '""' }}
+                    </script>
+
+                    <!-- Action Buttons -->
+                    <div class="row mt-4">
+                        <div class="col-12 text-center">
+                            <button class="btn btn-outline-primary me-2" onclick="printBlog()">
+                                <i class="fas fa-print me-2"></i>Print Guide
+                            </button>
+                            <button class="btn btn-outline-success me-2" onclick="shareBlog()">
+                                <i class="fas fa-share me-2"></i>Share
+                            </button>
+                            <button class="btn btn-outline-secondary" onclick="clearResults()">
+                                <i class="fas fa-search me-2"></i>Try Another Location
+                            </button>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Popular Destinations Quick Access -->
+                    {% if not found %}
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h5 class="text-center mb-3">Popular Destinations</h5>
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Taj Mahal')">Taj Mahal</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Goa')">Goa</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Kerala')">Kerala</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Rajasthan')">Rajasthan</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Himachal Pradesh')">Himachal Pradesh</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Kashmir')">Kashmir</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Mumbai')">Mumbai</button>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <button class="btn btn-outline-secondary btn-sm w-100" onclick="searchLocation('Delhi')">Delhi</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Demo Animation Button -->
+                            <div class="row mt-3">
+                                <div class="col-12 text-center">
+                                    <button class="btn btn-outline-info" onclick="demoTypingAnimation()">
+                                        <i class="fas fa-play me-2"></i>Demo Typing Animation
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Features Information -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-info-circle me-2"></i>What You'll Get
+                                    </h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary">📚 Complete Information</h6>
+                                            <p class="small text-muted">History, culture, attractions, food, and local insights</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary">📋 Rules & Regulations</h6>
+                                            <p class="small text-muted">Entry fees, timings, dress codes, and important guidelines</p>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <h6 class="text-primary">🎯 Travel Tips</h6>
+                                            <p class="small text-muted">Best time to visit, transportation, accommodation, and safety</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Back to Home -->
+                    <div class="text-center mt-4">
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation and loading state
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                } else {
+                    // Show loading spinner
+                    document.getElementById('loadingSpinner').style.display = 'block';
+                    document.getElementById('generateBtn').disabled = true;
+                    document.getElementById('generateBtn').innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Generating...';
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Typing Animation Functions
+function typeText(element, text, speed = 30) {
+    return new Promise((resolve) => {
+        let i = 0;
+        const cursor = '<span class="typing-cursor"></span>';
+        
+        function typeChar() {
+            if (i < text.length) {
+                const char = text.charAt(i);
+                
+                // Handle HTML tags
+                if (char === '<') {
+                    let tag = '';
+                    while (i < text.length && text.charAt(i) !== '>') {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    if (i < text.length) {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    element.innerHTML += tag;
+                } else {
+                    element.innerHTML += char;
+                }
+                
+                // Add cursor
+                element.innerHTML = element.innerHTML.replace(/<span class="typing-cursor"><\/span>/, '') + cursor;
+                
+                i++;
+                setTimeout(typeChar, speed);
+            } else {
+                // Remove cursor when done
+                element.innerHTML = element.innerHTML.replace(/<span class="typing-cursor"><\/span>/, '');
+                resolve();
+            }
+        }
+        
+        typeChar();
+    });
+}
+
+function typeTextWithProgress(element, text, progressElement, speed = 30) {
+    return new Promise((resolve) => {
+        let i = 0;
+        const totalLength = text.length;
+        const cursor = '<span class="typing-cursor"></span>';
+        
+        function typeChar() {
+            if (i < text.length) {
+                const char = text.charAt(i);
+                
+                // Handle HTML tags
+                if (char === '<') {
+                    let tag = '';
+                    while (i < text.length && text.charAt(i) !== '>') {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    if (i < text.length) {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    element.innerHTML += tag;
+                } else {
+                    element.innerHTML += char;
+                }
+                
+                // Update progress
+                const progress = Math.min((i / totalLength) * 100, 100);
+                if (progressElement) {
+                    progressElement.style.width = progress + '%';
+                }
+                
+                // Add cursor
+                element.innerHTML = element.innerHTML.replace(/<span class="typing-cursor"><\/span>/, '') + cursor;
+                
+                i++;
+                setTimeout(typeChar, speed);
+            } else {
+                // Remove cursor when done
+                element.innerHTML = element.innerHTML.replace(/<span class="typing-cursor"><\/span>/, '');
+                if (progressElement) {
+                    progressElement.style.width = '100%';
+                }
+                resolve();
+            }
+        }
+        
+        typeChar();
+    });
+}
+
+function startTypingAnimation(blogContent) {
+    const blogElement = document.getElementById('blogContent');
+    const typingIndicator = document.getElementById('typingIndicator');
+    
+    // Show typing indicator
+    typingIndicator.style.display = 'flex';
+    blogElement.innerHTML = '';
+    
+    // Create progress bar
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'typing-progress';
+    progressContainer.innerHTML = '<div class="typing-progress-bar"></div>';
+    blogElement.appendChild(progressContainer);
+    
+    const progressBar = progressContainer.querySelector('.typing-progress-bar');
+    
+    // Start typing animation
+    typeTextWithProgress(blogElement, blogContent, progressBar, 20).then(() => {
+        // Hide typing indicator
+        typingIndicator.style.display = 'none';
+        
+        // Remove progress bar
+        progressContainer.remove();
+        
+        // Format the content properly
+        formatBlogContent();
+    });
+}
+
+function formatBlogContent() {
+    const blogElement = document.getElementById('blogContent');
+    let content = blogElement.innerHTML;
+    
+    // Format the content
+    content = content
+        .replace(/## /g, '<h4 class="mt-4 mb-3 text-primary border-bottom pb-2">')
+        .replace(/### /g, '<h5 class="mt-3 mb-2 text-secondary">')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-dark">$1</strong>')
+        .replace(/- /g, '<li class="mb-2">')
+        .replace(/\n/g, '<br>');
+    
+    // Fix list formatting
+    content = content.replace(/(<li[^>]*>.*?<\/li>)/g, '<ul>$1</ul>');
+    content = content.replace(/<\/ul><ul>/g, '');
+    
+    blogElement.innerHTML = content;
+}
+
+function searchLocation(locationName) {
+    document.querySelector('input[name="location"]').value = locationName;
+    document.querySelector('form').submit();
+}
+
+function clearResults() {
+    document.querySelector('input[name="location"]').value = '';
+    document.querySelector('input[name="location"]').focus();
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function demoTypingAnimation() {
+    const demoContent = `## Demo: Taj Mahal Travel Guide
+
+### Overview & Introduction
+The Taj Mahal is one of the most iconic monuments in the world, located in Agra, India. Built by Mughal Emperor Shah Jahan in memory of his beloved wife Mumtaz Mahal, this white marble mausoleum is a UNESCO World Heritage Site and one of the Seven Wonders of the World.
+
+### Historical Background
+- Built between 1632 and 1653
+- Took 22 years to complete
+- Involved 20,000 artisans and craftsmen
+- Cost approximately 32 million rupees at the time
+
+### Tourist Attractions & Landmarks
+- **Main Mausoleum**: The central white marble structure
+- **Gardens**: Beautiful Mughal-style gardens with fountains
+- **Mosque**: Red sandstone mosque on the west side
+- **Guest House**: Matching structure on the east side
+
+### Rules, Regulations & Important Information
+- **Entry Fee**: ₹50 for Indians, ₹1100 for foreigners
+- **Timings**: 6:00 AM to 6:30 PM (closed on Fridays)
+- **Photography**: Allowed but tripods require special permission
+- **Dress Code**: Modest clothing recommended
+- **Security**: No bags, food, or drinks allowed inside
+
+### Best Time to Visit
+- **October to March**: Pleasant weather, ideal for sightseeing
+- **Early Morning**: Best lighting for photography
+- **Sunset**: Beautiful golden hour views
+
+This is a demonstration of the typing animation feature! 🎉`;
+
+    // Show the demo content area
+    const blogElement = document.getElementById('blogContent');
+    const typingIndicator = document.getElementById('typingIndicator');
+    
+    // Clear any existing content
+    blogElement.innerHTML = '';
+    
+    // Start the typing animation
+    startTypingAnimation(demoContent);
+    
+    // Scroll to the content area
+    setTimeout(() => {
+        blogElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+}
+
+function printBlog() {
+    const blogContent = document.getElementById('blogContent').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Travel Guide - {{ location if location else 'Destination' }}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    h4 { color: #007bff; margin-top: 20px; }
+                    h5 { color: #6c757d; margin-top: 15px; }
+                    ul { margin-left: 20px; }
+                    li { margin-bottom: 5px; }
+                    strong { font-weight: bold; }
+                </style>
+            </head>
+            <body>
+                <h1>Complete Travel Guide: {{ location.title() if location else 'Destination' }}</h1>
+                <hr>
+                ${blogContent}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function shareBlog() {
+    if (navigator.share) {
+        navigator.share({
+            title: `Travel Guide - {{ location.title() if location else 'Destination' }}`,
+            text: 'Check out this comprehensive travel guide!',
+            url: window.location.href
+        });
+    } else {
+        // Fallback: copy to clipboard
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(function() {
+            alert('Link copied to clipboard!');
+        });
+    }
+}
+
+// Auto-focus on location input and start typing animation
+document.addEventListener('DOMContentLoaded', function() {
+    const locationInput = document.querySelector('input[name="location"]');
+    if (locationInput && !locationInput.value) {
+        locationInput.focus();
+    }
+    
+    // Check if we have blog content to animate
+    const blogDataElement = document.getElementById('blogData');
+    if (blogDataElement) {
+        try {
+            // Decode HTML entities and parse JSON
+            const rawContent = blogDataElement.textContent;
+            const decodedContent = rawContent.replace(/&quot;/g, '"').replace(/&#34;/g, '"');
+            const blogContent = JSON.parse(decodedContent);
+            if (blogContent && blogContent.trim()) {
+                // Start typing animation after a short delay
+                setTimeout(() => {
+                    startTypingAnimation(blogContent);
+                }, 500);
+            }
+        } catch (e) {
+            console.error('Error parsing blog data:', e);
+        }
+    }
+});
+
+// Enhanced typing animation with better HTML handling
+function startTypingAnimation(blogContent) {
+    const blogElement = document.getElementById('blogContent');
+    const typingIndicator = document.getElementById('typingIndicator');
+    
+    // Show typing indicator
+    typingIndicator.style.display = 'flex';
+    blogElement.innerHTML = '';
+    
+    // Create progress bar
+    const progressContainer = document.createElement('div');
+    progressContainer.className = 'typing-progress';
+    progressContainer.innerHTML = '<div class="typing-progress-bar"></div>';
+    blogElement.appendChild(progressContainer);
+    
+    const progressBar = progressContainer.querySelector('.typing-progress-bar');
+    
+    // Start typing animation with better speed control
+    typeTextWithProgress(blogElement, blogContent, progressBar, 15).then(() => {
+        // Hide typing indicator
+        typingIndicator.style.display = 'none';
+        
+        // Remove progress bar
+        progressContainer.remove();
+        
+        // Format the content properly
+        formatBlogContent();
+        
+        // Scroll to top of content
+        blogElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+}
+
+// Improved text typing with better HTML tag handling
+function typeTextWithProgress(element, text, progressElement, speed = 30) {
+    return new Promise((resolve) => {
+        let i = 0;
+        const totalLength = text.length;
+        const cursor = '<span class="typing-cursor"></span>';
+        
+        function typeChar() {
+            if (i < text.length) {
+                const char = text.charAt(i);
+                
+                // Handle HTML tags more carefully
+                if (char === '<') {
+                    let tag = '';
+                    while (i < text.length && text.charAt(i) !== '>') {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    if (i < text.length) {
+                        tag += text.charAt(i);
+                        i++;
+                    }
+                    element.innerHTML += tag;
+                } else if (char === '\n') {
+                    element.innerHTML += '<br>';
+                } else {
+                    element.innerHTML += char;
+                }
+                
+                // Update progress
+                const progress = Math.min((i / totalLength) * 100, 100);
+                if (progressElement) {
+                    progressElement.style.width = progress + '%';
+                }
+                
+                // Add cursor
+                element.innerHTML = element.innerHTML.replace(/<span class="typing-cursor"><\/span>/, '') + cursor;
+                
+                i++;
+                setTimeout(typeChar, speed);
+            } else {
+                // Remove cursor when done
+                element.innerHTML = element.innerHTML.replace(/<span class="typing-cursor"><\/span>/, '');
+                if (progressElement) {
+                    progressElement.style.width = '100%';
+                }
+                resolve();
+            }
+        }
+        
+        typeChar();
+    });
+}
+
+// Enhanced content formatting
+function formatBlogContent() {
+    const blogElement = document.getElementById('blogContent');
+    let content = blogElement.innerHTML;
+    
+    // Format the content with better regex patterns
+    content = content
+        .replace(/## /g, '<h4 class="mt-4 mb-3 text-primary border-bottom pb-2">')
+        .replace(/### /g, '<h5 class="mt-3 mb-2 text-secondary">')
+        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-dark">$1</strong>')
+        .replace(/- /g, '<li class="mb-2">')
+        .replace(/\n/g, '<br>');
+    
+    // Fix list formatting
+    content = content.replace(/(<li[^>]*>.*?<\/li>)/g, '<ul>$1</ul>');
+    content = content.replace(/<\/ul><ul>/g, '');
+    
+    // Add closing tags for headers
+    content = content.replace(/(<h4[^>]*>)([^<]+)(<br>)/g, '$1$2</h4>');
+    content = content.replace(/(<h5[^>]*>)([^<]+)(<br>)/g, '$1$2</h5>');
+    
+    blogElement.innerHTML = content;
+}
+</script>
+
+<style>
+.blog-content {
+    line-height: 1.6;
+    font-size: 1.1rem;
+    min-height: 200px;
+}
+
+.blog-content h4 {
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.blog-content h5 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.8rem;
+}
+
+.blog-content ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.blog-content li {
+    margin-bottom: 0.5rem;
+}
+
+.blog-content strong {
+    color: #212529;
+}
+
+/* Typing Animation Styles */
+.typing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 10px;
+    margin: 1rem 0;
+}
+
+.typing-dots {
+    display: flex;
+    gap: 4px;
+    margin-right: 15px;
+}
+
+.typing-dots span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #007bff;
+    animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.typing-dots span:nth-child(3) {
+    animation-delay: 0s;
+}
+
+@keyframes typing {
+    0%, 80%, 100% {
+        transform: scale(0.8);
+        opacity: 0.5;
+    }
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.typing-text {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 1rem;
+}
+
+/* Cursor animation for typing effect */
+.typing-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 1.2em;
+    background-color: #007bff;
+    margin-left: 2px;
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 50% {
+        opacity: 1;
+    }
+    51%, 100% {
+        opacity: 0;
+    }
+}
+
+/* Smooth typing effect */
+.typing-word {
+    opacity: 0;
+    animation: fadeInWord 0.1s ease-in forwards;
+}
+
+@keyframes fadeInWord {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Progress bar for typing */
+.typing-progress {
+    width: 100%;
+    height: 3px;
+    background-color: #e9ecef;
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.typing-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #007bff, #0056b3);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+@media print {
+    .btn, .alert, .card-header, .typing-indicator {
+        display: none !important;
+    }
+    
+    .blog-content {
+        font-size: 12pt;
+        line-height: 1.4;
+    }
+}
+</style>
+{% endblock %}

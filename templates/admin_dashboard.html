@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-user-shield"></i> Admin Dashboard</h2>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="exportReport()">
+                        <i class="fas fa-download"></i> Export Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ hotels|length }}</div>
+                        <div class="label">Approved Hotels</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ bookings|length }}</div>
+                        <div class="label">Total Bookings</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ bookings|selectattr('status', 'equalto', 'confirmed')|list|length }}</div>
+                        <div class="label">Confirmed</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">${{ "%.2f"|format(bookings|sum(attribute='total_amount')) }}</div>
+                        <div class="label">Total Revenue</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hotels Overview -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-hotel"></i> Hotels Overview</h4>
+                </div>
+                <div class="card-body">
+                    {% if hotels %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Hotel Name</th>
+                                        <th>Owner</th>
+                                        <th>Location</th>
+                                        <th>Rating</th>
+                                        <th>Price/Night</th>
+                                        <th>Rooms</th>
+                                        <th>Bookings</th>
+                                        <th>Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hotel in hotels %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ hotel.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ hotel.description[:50] }}{% if hotel.description|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </td>
+                                            <td>{{ hotel.owner.first_name }} {{ hotel.owner.last_name }}</td>
+                                            <td>{{ hotel.city }}, {{ hotel.state }}</td>
+                                            <td>
+                                                <div class="hotel-rating">
+                                                    {% for i in range(hotel.rating|int) %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% endfor %}
+                                                    {% for i in range(5 - hotel.rating|int) %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            </td>
+                                            <td>${{ "%.2f"|format(hotel.price_per_night) }}</td>
+                                            <td>{{ hotel.available_rooms }}/{{ hotel.total_rooms }}</td>
+                                            <td>{{ hotel.bookings|length }}</td>
+                                            <td>${{ "%.2f"|format(hotel.bookings|sum(attribute='total_amount')) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-hotel fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No hotels available</h4>
+                            <p class="text-muted">Hotels will appear here once they are approved by the super admin.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Bookings -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-calendar-alt"></i> Recent Bookings</h4>
+                </div>
+                <div class="card-body">
+                    {% if bookings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Booking ID</th>
+                                        <th>Hotel</th>
+                                        <th>Guest</th>
+                                        <th>Check-in</th>
+                                        <th>Check-out</th>
+                                        <th>Rooms</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Booked</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in bookings[:20] %}
+                                        <tr>
+                                            <td>#{{ booking.id }}</td>
+                                            <td>{{ booking.hotel.name }}</td>
+                                            <td>{{ booking.user.first_name }} {{ booking.user.last_name }}</td>
+                                            <td>{{ booking.check_in.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ booking.check_out.strftime('%b %d, %Y') }}</td>
+                                            <td>{{ booking.rooms }}</td>
+                                            <td>${{ "%.2f"|format(booking.total_amount) }}</td>
+                                            <td>
+                                                <span class="badge badge-{{ booking.status }}">
+                                                    {{ booking.status.title() }}
+                                                </span>
+                                            </td>
+                                            <td>{{ booking.created_at.strftime('%b %d, %Y') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if bookings|length > 20 %}
+                            <div class="text-center mt-3">
+                                <small class="text-muted">Showing 20 of {{ bookings|length }} bookings</small>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No bookings yet</h4>
+                            <p class="text-muted">Bookings will appear here as customers make reservations.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Section -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-chart-pie"></i> Booking Status Distribution</h4>
+                </div>
+                <div class="card-body">
+                    {% set confirmed_count = bookings|selectattr('status', 'equalto', 'confirmed')|list|length %}
+                    {% set pending_count = bookings|selectattr('status', 'equalto', 'pending')|list|length %}
+                    {% set cancelled_count = bookings|selectattr('status', 'equalto', 'cancelled')|list|length %}
+                    {% set total_count = bookings|length %}
+                    
+                    {% if total_count > 0 %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Confirmed</span>
+                                <span>{{ confirmed_count }} ({{ "%.1f"|format((confirmed_count / total_count) * 100) }}%)</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-success" style="width: {{ (confirmed_count / total_count) * 100 }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Pending</span>
+                                <span>{{ pending_count }} ({{ "%.1f"|format((pending_count / total_count) * 100) }}%)</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-warning" style="width: {{ (pending_count / total_count) * 100 }}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between">
+                                <span>Cancelled</span>
+                                <span>{{ cancelled_count }} ({{ "%.1f"|format((cancelled_count / total_count) * 100) }}%)</span>
+                            </div>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-danger" style="width: {{ (cancelled_count / total_count) * 100 }}%"></div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-chart-pie fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No booking data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-chart-bar"></i> Top Performing Hotels</h4>
+                </div>
+                <div class="card-body">
+                    {% set hotel_stats = [] %}
+                    {% for hotel in hotels %}
+                        {% set hotel_bookings = hotel.bookings|length %}
+                        {% set hotel_revenue = hotel.bookings|sum(attribute='total_amount') %}
+                        {% set _ = hotel_stats.append({'name': hotel.name, 'bookings': hotel_bookings, 'revenue': hotel_revenue}) %}
+                    {% endfor %}
+                    {% set hotel_stats = hotel_stats|sort(attribute='revenue', reverse=true) %}
+                    
+                    {% if hotel_stats %}
+                        {% for hotel_stat in hotel_stats[:5] %}
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                                <div>
+                                    <strong>{{ hotel_stat.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ hotel_stat.bookings }} bookings</small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="fw-bold">${{ "%.2f"|format(hotel_stat.revenue) }}</div>
+                                    <small class="text-muted">revenue</small>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-chart-bar fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No hotel data available</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function refreshData() {
+    // In a real application, this would refresh the dashboard data via AJAX
+    location.reload();
+}
+
+function exportReport() {
+    // In a real application, this would generate and download a report
+    const reportData = {
+        hotels_count: {{ hotels|length }},
+        bookings_count: {{ bookings|length }},
+        confirmed_bookings: {{ bookings|selectattr('status', 'equalto', 'confirmed')|list|length }},
+        total_revenue: {{ bookings|sum(attribute='total_amount') }},
+        export_date: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(reportData, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'admin_report.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Auto-refresh dashboard every 5 minutes
+setInterval(function() {
+    // In a real application, you would make an AJAX call to refresh data
+    console.log('Auto-refreshing dashboard data...');
+}, 300000); // 5 minutes
+</script>
+{% endblock %}

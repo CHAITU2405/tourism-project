@@ -1,0 +1,684 @@
+{% extends "base.html" %}
+
+{% block title %}{{ hotel.name }} - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Hotel Images and Details -->
+        <div class="col-lg-8">
+            <div class="card shadow-custom mb-4">
+                <div class="card-body">
+                    <!-- Hotel Image -->
+                    {% if hotel.images %}
+                    <div class="mb-4">
+                        <div class="hotel-main-image">
+                            <img src="{{ url_for('static', filename=hotel.images) }}" 
+                                 alt="{{ hotel.name }}" 
+                                 class="img-fluid rounded shadow-sm" 
+                                 style="width: 100%; height: 300px; object-fit: cover;">
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Hotel Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h1 class="mb-2">{{ hotel.name }}</h1>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="hotel-rating me-3">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= hotel.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <span class="badge bg-primary">{% if hotel.category %}{{ hotel.category }}{% else %}Standard{% endif %} Hotel</span>
+                                {% if hotel.rating > 0 %}
+                                    <span class="badge bg-success">{{ "%.1f"|format(hotel.rating) }} ({{ hotel.total_reviews }} reviews)</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">No ratings yet</span>
+                                {% endif %}
+                            </div>
+                            <p class="text-muted mb-3">
+                                <i class="fas fa-map-marker-alt"></i> {{ hotel.address }}, {{ hotel.city }}, {{ hotel.state }}, {{ hotel.country }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="hotel-price mb-2">${{ "%.2f"|format(hotel.price_per_night) }}</div>
+                            <small class="text-muted">per night</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <h4>About This Hotel</h4>
+                        <p>{% if hotel.description %}{{ hotel.description }}{% else %}No description available for this hotel.{% endif %}</p>
+                    </div>
+                    
+                    <!-- Amenities -->
+                    {% if hotel.amenities %}
+                        <div class="mb-4">
+                            <h4>Amenities</h4>
+                            <div class="row">
+                                {% set amenities = hotel.amenities|from_json %}
+                                {% for amenity in amenities %}
+                                    <div class="col-md-6 mb-2">
+                                        <i class="fas fa-check text-success me-2"></i>{{ amenity }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Contact Information -->
+                    <div class="mb-4">
+                        <h4>Contact Information</h4>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><i class="fas fa-phone me-2"></i>{{ hotel.phone }}</p>
+                                <p><i class="fas fa-envelope me-2"></i>{{ hotel.email }}</p>
+                            </div>
+                            {% if hotel.website %}
+                                <div class="col-md-6">
+                                    <p><i class="fas fa-globe me-2"></i><a href="{{ hotel.website }}" target="_blank">{{ hotel.website }}</a></p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Reviews Section -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4>Reviews & Ratings</h4>
+                            {% if current_user.is_authenticated and current_user.role == 'user' %}
+                                <a href="{{ url_for('submit_hotel_review', hotel_id=hotel.id) }}" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-star"></i> Write a Review
+                                </a>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Overall Rating Summary -->
+                        <div class="row mb-4">
+                            <div class="col-md-4 text-center">
+                                <div class="display-4 text-warning">{{ "%.1f"|format(hotel.rating) }}</div>
+                                <div class="hotel-rating mb-2">
+                                    {% for i in range(1, 6) %}
+                                        {% if i <= hotel.rating %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-warning"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">{{ hotel.total_reviews }} review{{ 's' if hotel.total_reviews != 1 else '' }}</small>
+                            </div>
+                            <div class="col-md-8">
+                                {% if hotel.total_reviews > 0 %}
+                                    <!-- Rating Distribution -->
+                                    <div class="rating-breakdown">
+                                        {% for i in range(5, 0, -1) %}
+                                            <div class="d-flex align-items-center mb-1">
+                                                <small class="me-2">{{ i }} star{{ 's' if i > 1 else '' }}</small>
+                                                <div class="progress flex-grow-1 me-2" style="height: 8px;">
+                                                    <div class="progress-bar bg-warning" style="width: {{ (hotel.reviews|selectattr('rating', 'equalto', i)|list|length / hotel.total_reviews * 100) if hotel.total_reviews > 0 else 0 }}%"></div>
+                                                </div>
+                                                <small class="text-muted">{{ hotel.reviews|selectattr('rating', 'equalto', i)|list|length }}</small>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <p class="text-muted">No reviews yet. Be the first to review this hotel!</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Reviews -->
+                        {% if hotel.reviews %}
+                            <div class="reviews-list">
+                                {% for review in hotel.reviews[-3:] %}
+                                    <div class="review-item border-bottom pb-3 mb-3">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-1">{{ review.user.first_name }} {{ review.user.last_name }}</h6>
+                                                <div class="hotel-rating">
+                                                    {% for i in range(1, 6) %}
+                                                        {% if i <= review.rating %}
+                                                            <i class="fas fa-star text-warning"></i>
+                                                        {% else %}
+                                                            <i class="far fa-star text-warning"></i>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">{{ review.created_at.strftime('%B %d, %Y') }}</small>
+                                        </div>
+                                        {% if review.title %}
+                                            <h6 class="text-primary mb-2">{{ review.title }}</h6>
+                                        {% endif %}
+                                        <p class="mb-0">{{ review.comment }}</p>
+                                        {% if review.is_verified %}
+                                            <small class="text-success">
+                                                <i class="fas fa-check-circle"></i> Verified Stay
+                                            </small>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                                
+                                {% if hotel.reviews|length > 3 %}
+                                    <div class="text-center">
+                                        <a href="#" class="btn btn-outline-secondary btn-sm">
+                                            View All {{ hotel.total_reviews }} Reviews
+                                        </a>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <i class="fas fa-comments fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No Reviews Yet</h5>
+                                <p class="text-muted">Be the first to share your experience at this hotel!</p>
+                                {% if current_user.is_authenticated and current_user.role == 'user' %}
+                                    <a href="{{ url_for('submit_hotel_review', hotel_id=hotel.id) }}" class="btn btn-primary">
+                                        <i class="fas fa-star"></i> Write the First Review
+                                    </a>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Room Selection Section -->
+        <div class="col-lg-4">
+            <div class="card shadow-custom sticky-top" style="top: 20px;">
+                <div class="card-body">
+                    <h4 class="mb-3">Select Your Room</h4>
+                    
+                    {% if current_user.is_authenticated and current_user.role == 'user' %}
+                        {% if room_types %}
+                            <div class="mb-3">
+                                <label class="form-label">Check-in & Check-out Dates</label>
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <input type="date" class="form-control form-control-sm" id="check_in" placeholder="Check-in">
+                                    </div>
+                                    <div class="col-6">
+                                        <input type="date" class="form-control form-control-sm" id="check_out" placeholder="Check-out">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">
+                                    Number of Guests
+                                    <i class="fas fa-info-circle text-primary ms-1" 
+                                       data-bs-toggle="tooltip" 
+                                       title="Rooms will be auto-selected based on occupancy limits"></i>
+                                </label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control form-control-sm" id="guests" min="1" max="20" value="2">
+                                    <span class="input-group-text">guests</span>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="fas fa-magic text-primary"></i> 
+                                    Rooms will be automatically selected based on guest count and room capacity
+                                </small>
+                                </div>
+                            
+                            <hr>
+                            
+                            <!-- Room Types -->
+                            <div class="room-types" id="roomTypesContainer">
+                                {% for room_type in room_types %}
+                                    <div class="room-type-card mb-3 p-3 border rounded" data-room-type="{{ room_type.id }}">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">{{ room_type.name }}</h6>
+                                            <span class="badge bg-primary">₹{{ "%.0f"|format(room_type.price_per_night) }}/night</span>
+                            </div>
+                            
+                                        <p class="text-muted small mb-2">{% if room_type.description %}{{ room_type.description[:80] }}{% if room_type.description|length > 80 %}...{% endif %}{% else %}No description available{% endif %}</p>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-users me-1"></i>{{ room_type.max_occupancy }} guests max
+                                            </small>
+                                <small class="text-muted">
+                                                <i class="fas fa-bed me-1"></i><span class="total-rooms">{{ room_type.total_rooms }}</span> rooms total
+                                </small>
+                            </div>
+                            
+                    <!-- Availability Status -->
+                    <div class="availability-status mb-2" style="display: none;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-success">
+                                <i class="fas fa-check-circle me-1"></i>
+                                <span class="available-rooms">0</span> rooms available
+                            </small>
+                            <small class="text-muted">
+                                <span class="nights-count">0</span> nights
+                            </small>
+                        </div>
+                        <div class="availability-details" style="display: none;">
+                            <small class="text-muted">
+                                <span class="total-rooms-display">0</span> total • 
+                                <span class="booked-rooms-display">0</span> booked • 
+                                <span class="overlapping-bookings-display">0</span> overlapping bookings
+                            </small>
+                        </div>
+                    </div>
+                                        
+                                        {% if room_type.amenities %}
+                                            <div class="mb-2">
+                                                {% set room_amenities = room_type.amenities|from_json %}
+                                                {% for amenity in room_amenities[:3] %}
+                                                    <span class="badge bg-light text-dark me-1 small">{{ amenity }}</span>
+                                    {% endfor %}
+                                                {% if room_amenities|length > 3 %}
+                                                    <span class="badge bg-light text-dark small">+{{ room_amenities|length - 3 }} more</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="d-flex align-items-center">
+                                                <label class="form-label me-2 mb-0 small">Rooms:</label>
+                                                <select class="form-select form-select-sm room-quantity" style="width: 80px;" data-room-type="{{ room_type.id }}" disabled>
+                                                    <option value="0">0</option>
+                                </select>
+                                            </div>
+                                            <button type="button" class="btn btn-primary btn-sm book-room-btn" onclick="bookRoomType({{ room_type.id }})" disabled>
+                                                <i class="fas fa-calendar-check me-1"></i>Book
+                                            </button>
+                            </div>
+                            
+                                        <!-- Price Summary for this room type -->
+                                        <div class="price-summary mt-2" style="display: none;">
+                                            <div class="d-flex justify-content-between small">
+                                                <span>Total for <span class="selected-rooms">0</span> room(s):</span>
+                                                <span class="fw-bold text-primary">₹<span class="room-total">0</span></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <!-- Price Summary -->
+                            <div class="border-top pt-3 mt-3" id="price_summary" style="display: none;">
+                                <div class="d-flex justify-content-between">
+                                    <span>Nights:</span>
+                                    <span id="nights">0</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Rooms:</span>
+                                    <span id="selected_rooms">0</span>
+                                </div>
+                                <hr>
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Total:</span>
+                                    <span id="total_price">₹0</span>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                No room types available for this hotel yet.
+                            </div>
+                        {% endif %}
+                    {% elif current_user.is_authenticated %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            Only regular users can book hotels. Your account type is: <strong>{{ current_user.role }}</strong>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Please <a href="{{ url_for('login') }}" class="alert-link">sign in</a> to book this hotel.
+                        </div>
+                        <div class="d-grid">
+                            <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">
+                                <i class="fas fa-sign-in-alt"></i> Sign In to Book
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.auto-selection-message {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-radius: 0.375rem;
+}
+
+.auto-selection-message.alert-info {
+    background-color: #d1ecf1;
+    border-color: #bee5eb;
+    color: #0c5460;
+}
+
+.auto-selection-message.alert-warning {
+    background-color: #fff3cd;
+    border-color: #ffeaa7;
+    color: #856404;
+}
+
+.auto-selection-message i {
+    margin-right: 0.5rem;
+}
+
+.room-type-card {
+    transition: all 0.3s ease;
+}
+
+.room-type-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('check_in');
+    const checkOutInput = document.getElementById('check_out');
+    const guestsInput = document.getElementById('guests');
+    const hotelId = {{ hotel.id }};
+    
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.setAttribute('min', today);
+    
+    // Room types data
+    const roomTypes = {
+        {% for room_type in room_types %}
+        {{ room_type.id }}: {
+            name: "{{ room_type.name }}",
+            price: {{ room_type.price_per_night }},
+            maxOccupancy: {{ room_type.max_occupancy }},
+            totalRooms: {{ room_type.total_rooms }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    function updateRoomTypeAvailability() {
+        const checkIn = checkInInput.value;
+        const checkOut = checkOutInput.value;
+        
+        if (!checkIn || !checkOut) {
+            // Reset all room types
+            document.querySelectorAll('.room-type-card').forEach(card => {
+                const roomTypeId = card.dataset.roomType;
+                const availabilityStatus = card.querySelector('.availability-status');
+                const roomQuantity = card.querySelector('.room-quantity');
+                const bookBtn = card.querySelector('.book-room-btn');
+                const priceSummary = card.querySelector('.price-summary');
+                
+                availabilityStatus.style.display = 'none';
+                roomQuantity.disabled = true;
+                roomQuantity.innerHTML = '<option value="0">0</option>';
+                bookBtn.disabled = true;
+                priceSummary.style.display = 'none';
+            });
+            return;
+        }
+        
+        // Check availability for each room type
+        Object.keys(roomTypes).forEach(roomTypeId => {
+            fetch(`/api/room-type-availability/${roomTypeId}?check_in=${checkIn}&check_out=${checkOut}`)
+                .then(response => response.json())
+                .then(data => {
+                    console.log(`Availability data for room type ${roomTypeId}:`, data);
+                    updateRoomTypeCard(roomTypeId, data);
+                })
+                .catch(error => {
+                    console.error(`Error checking availability for room type ${roomTypeId}:`, error);
+                });
+        });
+    }
+    
+    function updateRoomTypeCard(roomTypeId, availabilityData) {
+        const card = document.querySelector(`[data-room-type="${roomTypeId}"]`);
+        const availabilityStatus = card.querySelector('.availability-status');
+        const availableRoomsSpan = card.querySelector('.available-rooms');
+        const nightsCountSpan = card.querySelector('.nights-count');
+        const roomQuantity = card.querySelector('.room-quantity');
+        const bookBtn = card.querySelector('.book-room-btn');
+        const priceSummary = card.querySelector('.price-summary');
+        const availabilityDetails = card.querySelector('.availability-details');
+        
+        const availableRooms = availabilityData.max_available_rooms;
+        const totalRooms = availabilityData.total_rooms;
+        const nights = Math.ceil((new Date(availabilityData.check_out) - new Date(availabilityData.check_in)) / (1000 * 60 * 60 * 24));
+        const overlappingBookings = availabilityData.overlapping_bookings_count || 0;
+        
+        // Update availability display
+        availableRoomsSpan.textContent = availableRooms;
+        nightsCountSpan.textContent = nights;
+        availabilityStatus.style.display = 'block';
+        
+        // Update availability details
+        if (availabilityDetails) {
+            const totalRoomsDisplay = availabilityDetails.querySelector('.total-rooms-display');
+            const bookedRoomsDisplay = availabilityDetails.querySelector('.booked-rooms-display');
+            const overlappingBookingsDisplay = availabilityDetails.querySelector('.overlapping-bookings-display');
+            
+            if (totalRoomsDisplay) totalRoomsDisplay.textContent = totalRooms;
+            if (bookedRoomsDisplay) bookedRoomsDisplay.textContent = totalRooms - availableRooms;
+            if (overlappingBookingsDisplay) overlappingBookingsDisplay.textContent = overlappingBookings;
+            
+            availabilityDetails.style.display = 'block';
+        }
+        
+        // Update room quantity options
+        roomQuantity.innerHTML = '<option value="0">0</option>';
+        if (availableRooms > 0) {
+            roomQuantity.disabled = false;
+                    for (let i = 1; i <= Math.min(availableRooms, 6); i++) {
+                        const option = document.createElement('option');
+                        option.value = i;
+                option.textContent = i;
+                roomQuantity.appendChild(option);
+            }
+        } else {
+            roomQuantity.disabled = true;
+        }
+        
+        // Update book button
+        bookBtn.disabled = availableRooms === 0;
+        
+        // Add event listener for room quantity change
+        roomQuantity.onchange = function() {
+            updateRoomTypePrice(roomTypeId, parseInt(this.value), nights);
+        };
+        
+        // Auto-select rooms based on current guest count if dates are selected
+        const currentGuests = parseInt(guestsInput.value) || 0;
+        if (currentGuests > 0 && availableRooms > 0) {
+            const maxOccupancy = roomTypes[roomTypeId].maxOccupancy;
+            const minRoomsNeeded = Math.ceil(currentGuests / maxOccupancy);
+            
+            if (minRoomsNeeded <= availableRooms) {
+                roomQuantity.value = minRoomsNeeded;
+                updateRoomTypePrice(roomTypeId, minRoomsNeeded, nights);
+                showAutoSelectionMessage(roomTypeId, minRoomsNeeded, currentGuests, maxOccupancy);
+            }
+        }
+    }
+    
+    function updateRoomTypePrice(roomTypeId, rooms, nights) {
+        const card = document.querySelector(`[data-room-type="${roomTypeId}"]`);
+        const priceSummary = card.querySelector('.price-summary');
+        const selectedRoomsSpan = card.querySelector('.selected-rooms');
+        const roomTotalSpan = card.querySelector('.room-total');
+        
+        if (rooms > 0) {
+            const totalPrice = rooms * nights * roomTypes[roomTypeId].price;
+            selectedRoomsSpan.textContent = rooms;
+            roomTotalSpan.textContent = totalPrice.toLocaleString();
+            priceSummary.style.display = 'block';
+        } else {
+            priceSummary.style.display = 'none';
+        }
+    }
+    
+    function validateGuestCapacity(roomTypeId, rooms, guests) {
+        const maxOccupancy = roomTypes[roomTypeId].maxOccupancy;
+        const totalCapacity = rooms * maxOccupancy;
+        return guests <= totalCapacity;
+    }
+    
+    function showAutoSelectionMessage(roomTypeId, rooms, guests, maxOccupancy) {
+        const card = document.querySelector(`[data-room-type="${roomTypeId}"]`);
+        let messageDiv = card.querySelector('.auto-selection-message');
+        
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.className = 'auto-selection-message alert alert-info alert-sm mt-2';
+            card.querySelector('.price-summary').parentNode.insertBefore(messageDiv, card.querySelector('.price-summary'));
+        }
+        
+        const totalCapacity = rooms * maxOccupancy;
+        messageDiv.innerHTML = `
+            <i class="fas fa-magic"></i> 
+            Auto-selected ${rooms} room${rooms > 1 ? 's' : ''} for ${guests} guest${guests > 1 ? 's' : ''} 
+            (${totalCapacity} total capacity)
+        `;
+        messageDiv.style.display = 'block';
+        
+        // Hide message after 5 seconds
+        setTimeout(() => {
+            if (messageDiv) {
+                messageDiv.style.display = 'none';
+            }
+        }, 5000);
+    }
+    
+    function showInsufficientRoomsMessage(roomTypeId, guests, maxOccupancy, availableRooms) {
+        const card = document.querySelector(`[data-room-type="${roomTypeId}"]`);
+        let messageDiv = card.querySelector('.auto-selection-message');
+        
+        if (!messageDiv) {
+            messageDiv = document.createElement('div');
+            messageDiv.className = 'auto-selection-message alert alert-warning alert-sm mt-2';
+            card.querySelector('.price-summary').parentNode.insertBefore(messageDiv, card.querySelector('.price-summary'));
+        }
+        
+        const minRoomsNeeded = Math.ceil(guests / maxOccupancy);
+        messageDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i> 
+            Need ${minRoomsNeeded} room${minRoomsNeeded > 1 ? 's' : ''} for ${guests} guest${guests > 1 ? 's' : ''}, 
+            but only ${availableRooms} available
+        `;
+        messageDiv.style.display = 'block';
+        
+        // Hide message after 5 seconds
+        setTimeout(() => {
+            if (messageDiv) {
+                messageDiv.style.display = 'none';
+            }
+        }, 5000);
+    }
+    
+    // Event listeners
+    checkInInput.addEventListener('change', function() {
+        const checkInDate = new Date(this.value);
+        const nextDay = new Date(checkInDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        checkOutInput.setAttribute('min', nextDay.toISOString().split('T')[0]);
+        updateRoomTypeAvailability();
+    });
+    
+    checkOutInput.addEventListener('change', function() {
+        updateRoomTypeAvailability();
+    });
+    
+    guestsInput.addEventListener('change', function() {
+        const guests = parseInt(this.value);
+        if (guests > 0) {
+            // Auto-select minimum rooms needed for each room type
+            document.querySelectorAll('.room-quantity').forEach(select => {
+                const roomTypeId = select.dataset.roomType;
+                const maxOccupancy = roomTypes[roomTypeId].maxOccupancy;
+                
+                // Calculate minimum rooms needed
+                const minRoomsNeeded = Math.ceil(guests / maxOccupancy);
+                
+                // Check if the room type is available and has enough rooms
+                const card = document.querySelector(`[data-room-type="${roomTypeId}"]`);
+                const availableRoomsSpan = card.querySelector('.available-rooms');
+                const availableRooms = parseInt(availableRoomsSpan.textContent) || 0;
+                
+                if (availableRooms > 0 && minRoomsNeeded <= availableRooms) {
+                    // Set the minimum rooms needed
+                    select.value = minRoomsNeeded;
+                    select.dispatchEvent(new Event('change'));
+                    
+                    // Show auto-selection message
+                    showAutoSelectionMessage(roomTypeId, minRoomsNeeded, guests, maxOccupancy);
+                } else if (availableRooms > 0) {
+                    // Not enough rooms available
+                    select.value = 0;
+                    showInsufficientRoomsMessage(roomTypeId, guests, maxOccupancy, availableRooms);
+                }
+            });
+        }
+    });
+});
+
+function bookRoomType(roomTypeId) {
+    const checkIn = document.getElementById('check_in').value;
+    const checkOut = document.getElementById('check_out').value;
+    const guests = parseInt(document.getElementById('guests').value);
+    const roomsSelect = document.querySelector(`select[data-room-type="${roomTypeId}"]`);
+    const rooms = parseInt(roomsSelect.value);
+    
+    if (!checkIn || !checkOut) {
+        alert('Please select check-in and check-out dates');
+        return;
+    }
+    
+    if (rooms === 0) {
+        alert('Please select number of rooms');
+        return;
+    }
+    
+    // Get room type data
+    const roomTypes = {
+        {% for room_type in room_types %}
+        {{ room_type.id }}: {
+            name: "{{ room_type.name }}",
+            price: {{ room_type.price_per_night }},
+            maxOccupancy: {{ room_type.max_occupancy }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    const maxOccupancy = roomTypes[roomTypeId].maxOccupancy;
+    const totalCapacity = rooms * maxOccupancy;
+    
+    if (guests > totalCapacity) {
+        alert(`Maximum occupancy for ${rooms} room(s) of this type is ${totalCapacity} guests. You selected ${guests} guests.`);
+        return;
+    }
+    
+    // Redirect to booking page with parameters
+    const bookingUrl = `/book-room/${roomTypeId}?check_in=${checkIn}&check_out=${checkOut}&rooms=${rooms}&guests=${guests}`;
+    window.location.href = bookingUrl;
+}
+</script>
+{% endblock %}

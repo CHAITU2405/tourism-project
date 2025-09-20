@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}Book {{ room_type.name }} - {{ hotel.name }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-custom">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-gradient">Complete Your Booking</h2>
+                        <p class="text-muted">{{ hotel.name }} - {{ hotel.city }}</p>
+                    </div>
+
+                    <!-- Room Type Summary -->
+                    <div class="card border mb-4">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5 class="card-title">{{ room_type.name }}</h5>
+                                    <p class="card-text text-muted">{{ room_type.description }}</p>
+                                    
+                                    <div class="row g-2 mb-3">
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-users text-primary me-2"></i>
+                                                <small class="text-muted">{{ room_type.max_occupancy }} guests max</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-bed text-primary me-2"></i>
+                                                <small class="text-muted">{{ room_type.total_rooms }} rooms total</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if room_type.amenities %}
+                                        <div class="mb-2">
+                                            <small class="text-muted">Amenities:</small>
+                                            <div class="mt-1">
+                                                {% for amenity in room_type.amenities|from_json %}
+                                                    <span class="badge bg-light text-dark me-1 mb-1">{{ amenity }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <h4 class="text-primary mb-0">₹{{ "%.0f"|format(room_type.price_per_night) }}</h4>
+                                    <small class="text-muted">per night</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- Booking Details -->
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Booking Details</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="check_in" class="form-label">Check-in Date *</label>
+                                <input type="date" class="form-control" id="check_in" name="check_in" 
+                                       value="{{ check_in }}" required>
+                                <div class="invalid-feedback">
+                                    Please select a check-in date.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="check_out" class="form-label">Check-out Date *</label>
+                                <input type="date" class="form-control" id="check_out" name="check_out" 
+                                       value="{{ check_out }}" required>
+                                <div class="invalid-feedback">
+                                    Please select a check-out date.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="rooms" class="form-label">Number of Rooms *</label>
+                                <select class="form-control" id="rooms" name="rooms" required>
+                                    {% for i in range(1, min(room_type.total_rooms + 1, 6)) %}
+                                        <option value="{{ i }}" {% if rooms|int == i %}selected{% endif %}>
+                                            {{ i }} room{{ 's' if i > 1 else '' }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select number of rooms.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="guests" class="form-label">Number of Guests *</label>
+                                <select class="form-control" id="guests" name="guests" required>
+                                    {% for i in range(1, room_type.max_occupancy * 3 + 1) %}
+                                        <option value="{{ i }}" {% if guests|int == i %}selected{% endif %}>
+                                            {{ i }} guest{{ 's' if i > 1 else '' }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select number of guests.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="special_requests" class="form-label">Special Requests (Optional)</label>
+                            <textarea class="form-control" id="special_requests" name="special_requests" 
+                                      rows="3" placeholder="Any special requests or requirements..."></textarea>
+                        </div>
+
+                        <!-- Price Summary -->
+                        <div class="border-top pt-3 mb-4">
+                            <h5 class="mb-3">Booking Summary</h5>
+                            <div class="d-flex justify-content-between">
+                                <span>Room Type:</span>
+                                <span>{{ room_type.name }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Price per night:</span>
+                                <span>₹{{ "%.0f"|format(room_type.price_per_night) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Nights:</span>
+                                <span id="nights">0</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Rooms:</span>
+                                <span id="selected_rooms">1</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between fw-bold fs-5">
+                                <span>Total Amount:</span>
+                                <span id="total_price" class="text-primary">₹0</span>
+                            </div>
+                        </div>
+
+                        <!-- Submit Buttons -->
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('hotel_detail', hotel_id=hotel.id) }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Hotel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-calendar-check me-2"></i>Confirm Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const checkInInput = document.getElementById('check_in');
+    const checkOutInput = document.getElementById('check_out');
+    const roomsSelect = document.getElementById('rooms');
+    const guestsSelect = document.getElementById('guests');
+    const pricePerNight = {{ room_type.price_per_night }};
+    const maxOccupancy = {{ room_type.max_occupancy }};
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    checkInInput.setAttribute('min', today);
+    checkOutInput.setAttribute('min', today);
+    
+    function calculateTotal() {
+        const checkIn = new Date(checkInInput.value);
+        const checkOut = new Date(checkOutInput.value);
+        const rooms = parseInt(roomsSelect.value);
+        const guests = parseInt(guestsSelect.value);
+        
+        if (checkIn && checkOut && checkIn < checkOut) {
+            const timeDiff = checkOut.getTime() - checkIn.getTime();
+            const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            if (nights > 0) {
+                const total = nights * rooms * pricePerNight;
+                
+                document.getElementById('nights').textContent = nights;
+                document.getElementById('selected_rooms').textContent = rooms;
+                document.getElementById('total_price').textContent = '₹' + total.toFixed(0);
+                
+                // Validate guest count
+                const maxGuests = rooms * maxOccupancy;
+                if (guests > maxGuests) {
+                    guestsSelect.setCustomValidity(`Maximum ${maxGuests} guests allowed for ${rooms} room(s)`);
+                } else {
+                    guestsSelect.setCustomValidity('');
+                }
+            }
+        }
+    }
+    
+    // Event listeners
+    checkInInput.addEventListener('change', function() {
+        if (checkOutInput.value) {
+            calculateTotal();
+        }
+    });
+    
+    checkOutInput.addEventListener('change', function() {
+        if (checkInInput.value) {
+            calculateTotal();
+        }
+    });
+    
+    roomsSelect.addEventListener('change', calculateTotal);
+    guestsSelect.addEventListener('change', calculateTotal);
+    
+    // Initialize calculation
+    calculateTotal();
+    
+    // Form validation
+    (function() {
+        'use strict';
+        window.addEventListener('load', function() {
+            var forms = document.getElementsByClassName('needs-validation');
+            var validation = Array.prototype.filter.call(forms, function(form) {
+                form.addEventListener('submit', function(event) {
+                    if (form.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+});
+</script>
+{% endblock %}

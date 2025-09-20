@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Admin - Tourism Complaints') }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-comment-dots text-warning me-2"></i>
+                        {{ _('Tourism Complaints Management') }}
+                    </h1>
+                    <p class="text-muted mb-0">{{ _('Review and manage tourism feedback and complaints') }}</p>
+                </div>
+                <a href="{{ url_for('superadmin_dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    {{ _('Back to Dashboard') }}
+                </a>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ complaints.total }}</h4>
+                                    <p class="mb-0">{{ _('Total Complaints') }}</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-comment-dots fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ complaints.items|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                                    <p class="mb-0">{{ _('Pending') }}</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-clock fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ complaints.items|selectattr('status', 'equalto', 'resolved')|list|length }}</h4>
+                                    <p class="mb-0">{{ _('Resolved') }}</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-check-circle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h4 class="mb-0">{{ complaints.items|selectattr('severity', 'equalto', 'critical')|list|length }}</h4>
+                                    <p class="mb-0">{{ _('Critical') }}</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-exclamation-triangle fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complaints List -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        {{ _('All Complaints') }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if complaints.items %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>{{ _('ID') }}</th>
+                                        <th>{{ _('Title') }}</th>
+                                        <th>{{ _('Type') }}</th>
+                                        <th>{{ _('Location') }}</th>
+                                        <th>{{ _('Severity') }}</th>
+                                        <th>{{ _('Status') }}</th>
+                                        <th>{{ _('Date') }}</th>
+                                        <th>{{ _('Actions') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for complaint in complaints.items %}
+                                    <tr>
+                                        <td>{{ complaint.id }}</td>
+                                        <td>
+                                            <strong>{{ complaint.title }}</strong>
+                                            {% if complaint.public_visibility %}
+                                                <span class="badge bg-info ms-1">{{ _('Public') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ complaint.complaint_type.title() }}</span>
+                                        </td>
+                                        <td>{{ complaint.location }}</td>
+                                        <td>
+                                            {% if complaint.severity == 'critical' %}
+                                                <span class="badge bg-danger">{{ _('Critical') }}</span>
+                                            {% elif complaint.severity == 'high' %}
+                                                <span class="badge bg-warning">{{ _('High') }}</span>
+                                            {% elif complaint.severity == 'medium' %}
+                                                <span class="badge bg-info">{{ _('Medium') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-success">{{ _('Low') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if complaint.status == 'pending' %}
+                                                <span class="badge bg-warning">{{ _('Pending') }}</span>
+                                            {% elif complaint.status == 'reviewed' %}
+                                                <span class="badge bg-info">{{ _('Reviewed') }}</span>
+                                            {% elif complaint.status == 'resolved' %}
+                                                <span class="badge bg-success">{{ _('Resolved') }}</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ _('Closed') }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ complaint.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" 
+                                                    onclick="viewComplaint({{ complaint.id }})"
+                                                    title="{{ _('View Details') }}">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if complaints.pages > 1 %}
+                        <nav aria-label="Complaints pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if complaints.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_complaints', page=complaints.prev_num) }}">
+                                            {{ _('Previous') }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in complaints.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != complaints.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('admin_complaints', page=page_num) }}">{{ page_num }}</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if complaints.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('admin_complaints', page=complaints.next_num) }}">
+                                            {{ _('Next') }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-comment-slash fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">{{ _('No complaints found') }}</h5>
+                            <p class="text-muted">{{ _('No tourism complaints have been submitted yet.') }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Complaint Details Modal -->
+<div class="modal fade" id="complaintModal" tabindex="-1" aria-labelledby="complaintModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="complaintModalLabel">
+                    <i class="fas fa-comment-dots me-2"></i>
+                    {{ _('Complaint Details') }}
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="complaintDetails">
+                <!-- Complaint details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ _('Close') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewComplaint(complaintId) {
+    // This would typically fetch complaint details via AJAX
+    // For now, we'll show a placeholder
+    document.getElementById('complaintDetails').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">{{ _('Loading...') }}</span>
+            </div>
+            <p class="mt-2 text-muted">{{ _('Loading complaint details...') }}</p>
+        </div>
+    `;
+    
+    const modal = new bootstrap.Modal(document.getElementById('complaintModal'));
+    modal.show();
+    
+    // In a real implementation, you would fetch the complaint details here
+    setTimeout(() => {
+        document.getElementById('complaintDetails').innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle me-2"></i>
+                {{ _('Complaint details loading functionality would be implemented here.') }}
+            </div>
+        `;
+    }, 1000);
+}
+</script>
+{% endblock %}

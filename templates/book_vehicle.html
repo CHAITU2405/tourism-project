@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Book') }} {{ vehicle.make }} {{ vehicle.model }} - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-car"></i> {{ _('Book') }} {{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})
+                    </h2>
+                    <p class="mb-0">{{ rental.name }} • {{ rental.city }}</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="bookingForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-calendar-alt"></i> {{ _('Rental Period') }}</h5>
+                                <div class="mb-3">
+                                    <label for="pickup_date" class="form-label">{{ _('Pickup Date') }} *</label>
+                                    <input type="date" class="form-control" id="pickup_date" name="pickup_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="return_date" class="form-label">{{ _('Return Date') }} *</label>
+                                    <input type="date" class="form-control" id="return_date" name="return_date" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="pickup_time" class="form-label">{{ _('Pickup Time') }} *</label>
+                                    <input type="time" class="form-control" id="pickup_time" name="pickup_time" 
+                                           value="10:00" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="return_time" class="form-label">Return Time *</label>
+                                    <input type="time" class="form-control" id="return_time" name="return_time" 
+                                           value="18:00" required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-map-marker-alt"></i> Pickup & Return Locations</h5>
+                                <div class="mb-3">
+                                    <label for="pickup_location" class="form-label">Pickup Location *</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="pickup_location" name="pickup_location" 
+                                               value="{{ rental.address }}" required>
+                                        <button type="button" class="btn btn-outline-primary location-btn" id="getCurrentLocationPickup" 
+                                                title="Get current location">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Click the location button to auto-fill your current location
+                                    </small>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="return_location" class="form-label">Return Location *</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="return_location" name="return_location" 
+                                               value="{{ rental.address }}" required>
+                                        <button type="button" class="btn btn-outline-primary location-btn" id="getCurrentLocationReturn" 
+                                                title="Get current location">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </button>
+                                    </div>
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i> Click the location button to auto-fill your current location
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-id-card"></i> Driver Information</h5>
+                                <div class="mb-3">
+                                    <label for="drivers_license" class="form-label">Driver's License Number *</label>
+                                    <input type="text" class="form-control" id="drivers_license" name="drivers_license" 
+                                           placeholder="Enter your license number" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="drivers_license_expiry" class="form-label">License Expiry Date *</label>
+                                    <input type="date" class="form-control" id="drivers_license_expiry" name="drivers_license_expiry" 
+                                           required>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-comment"></i> Special Requests</h5>
+                                <div class="mb-3">
+                                    <label for="special_requests" class="form-label">Special Requests</label>
+                                    <textarea class="form-control" id="special_requests" name="special_requests" 
+                                              rows="4" placeholder="Any special requests or requirements..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <h5><i class="fas fa-info-circle"></i> Vehicle Details</h5>
+                                
+                                <!-- Vehicle Image -->
+                                {% if vehicle.images %}
+                                    {% set vehicle_images = vehicle.images|from_json %}
+                                    {% if vehicle_images and vehicle_images[0] %}
+                                        <div class="text-center mb-3">
+                                            <img src="{{ url_for('static', filename=vehicle_images[0]) }}" 
+                                                 alt="{{ vehicle.make }} {{ vehicle.model }}" 
+                                                 class="img-fluid rounded shadow-sm" 
+                                                 style="max-height: 200px; max-width: 300px;">
+                                        </div>
+                                    {% endif %}
+                                {% endif %}
+                                
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <strong>Type:</strong> {{ vehicle.vehicle_type.title() }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Seating:</strong> {{ vehicle.seating_capacity }} seats
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Transmission:</strong> {{ vehicle.transmission.title() }}
+                                    </div>
+                                    <div class="col-md-3">
+                                        <strong>Fuel:</strong> {{ vehicle.fuel_type.title() }}
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <strong>Total Vehicles:</strong> {{ vehicle.total_vehicles }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Available:</strong> {{ vehicle.available_vehicles }}
+                                    </div>
+                                </div>
+                                {% if vehicle.features %}
+                                    <div class="mt-3">
+                                        <strong>Features:</strong>
+                                        {% for feature in vehicle.features|from_json %}
+                                            <span class="badge bg-secondary me-1">{{ feature }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-success btn-lg">
+                                <i class="fas fa-credit-card"></i> Confirm Booking
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calculator"></i> Booking Summary
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Vehicle:</h6>
+                        <p class="mb-0">{{ vehicle.make }} {{ vehicle.model }} ({{ vehicle.year }})</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Rental Company:</h6>
+                        <p class="mb-0">{{ rental.name }}</p>
+                        <small class="text-muted">{{ rental.city }}, {{ rental.state }}</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Price per day:</h6>
+                        <p class="mb-0 text-success">₹{{ vehicle.price_per_day }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Rental Period:</h6>
+                        <p class="mb-0" id="rental-period">Select dates to see duration</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Total Amount:</h6>
+                        <h4 class="text-success mb-0" id="total-amount">₹0</h4>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <small>
+                            <strong>Note:</strong> Final amount will be calculated based on selected dates. 
+                            Additional charges may apply for insurance, fuel, or other services.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.location-btn {
+    transition: all 0.3s ease;
+}
+
+.location-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0,123,255,0.3);
+}
+
+.location-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.location-message {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+}
+
+.input-group .btn {
+    border-left: 0;
+}
+
+.input-group .form-control:focus + .btn {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pickupDate = document.getElementById('pickup_date');
+    const returnDate = document.getElementById('return_date');
+    const rentalPeriod = document.getElementById('rental-period');
+    const totalAmount = document.getElementById('total-amount');
+    const pricePerDay = {{ vehicle.price_per_day }};
+    
+    // Set minimum date to today
+    const today = new Date().toISOString().split('T')[0];
+    pickupDate.min = today;
+    
+    // Set minimum date for license expiry to today
+    const licenseExpiry = document.getElementById('drivers_license_expiry');
+    if (licenseExpiry) {
+        licenseExpiry.min = today;
+    }
+    returnDate.min = today;
+    
+    function calculateTotal() {
+        if (pickupDate.value && returnDate.value) {
+            const pickup = new Date(pickupDate.value);
+            const return_d = new Date(returnDate.value);
+            
+            if (return_d > pickup) {
+                const diffTime = Math.abs(return_d - pickup);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                const total = diffDays * pricePerDay;
+                
+                rentalPeriod.textContent = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+                totalAmount.textContent = `₹${total}`;
+            } else {
+                rentalPeriod.textContent = 'Invalid date range';
+                totalAmount.textContent = '₹0';
+            }
+        } else {
+            rentalPeriod.textContent = 'Select dates to see duration';
+            totalAmount.textContent = '₹0';
+        }
+    }
+    
+    pickupDate.addEventListener('change', function() {
+        returnDate.min = this.value;
+        if (returnDate.value && returnDate.value <= this.value) {
+            returnDate.value = '';
+        }
+        calculateTotal();
+    });
+    
+    returnDate.addEventListener('change', calculateTotal);
+    
+    // Location functionality
+    function getCurrentLocation(inputField, button) {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by this browser.');
+            return;
+        }
+        
+        // Show loading state
+        const originalIcon = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        button.disabled = true;
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                // Use reverse geocoding to get address
+                fetch(`https://api.openrouteservice.org/geocode/reverse?api_key=eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjM5ZmUzNjU1MTBmYTQ4NDhhMTgwYTdiZjNlMmU0YzFiIiwiaCI6Im11cm11cjY0In0=&point.lon=${lng}&point.lat=${lat}&size=1`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.features && data.features.length > 0) {
+                            const address = data.features[0].properties.label || 
+                                          `${data.features[0].properties.locality || ''}, ${data.features[0].properties.county || ''}, ${data.features[0].properties.country || ''}`.trim();
+                            inputField.value = address;
+                            
+                            // Show success message
+                            showLocationMessage(inputField, 'Location updated successfully!', 'success');
+                        } else {
+                            // Fallback to coordinates if no address found
+                            inputField.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                            showLocationMessage(inputField, 'Location updated (coordinates only)', 'warning');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Reverse geocoding error:', error);
+                        // Fallback to coordinates
+                        inputField.value = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+                        showLocationMessage(inputField, 'Location updated (coordinates only)', 'warning');
+                    })
+                    .finally(() => {
+                        // Restore button state
+                        button.innerHTML = originalIcon;
+                        button.disabled = false;
+                    });
+            },
+            function(error) {
+                console.error('Geolocation error:', error);
+                let errorMessage = 'Unable to get your location. ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        errorMessage += 'Please allow location access and try again.';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        errorMessage += 'Location information is unavailable.';
+                        break;
+                    case error.TIMEOUT:
+                        errorMessage += 'Location request timed out.';
+                        break;
+                    default:
+                        errorMessage += 'An unknown error occurred.';
+                        break;
+                }
+                alert(errorMessage);
+                
+                // Restore button state
+                button.innerHTML = originalIcon;
+                button.disabled = false;
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000 // 5 minutes
+            }
+        );
+    }
+    
+    function showLocationMessage(inputField, message, type) {
+        // Remove any existing message
+        const existingMessage = inputField.parentNode.parentNode.querySelector('.location-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Create new message
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `location-message alert alert-${type === 'success' ? 'success' : 'warning'} alert-dismissible fade show mt-2`;
+        messageDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-triangle'}"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        inputField.parentNode.parentNode.appendChild(messageDiv);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (messageDiv.parentNode) {
+                messageDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Add event listeners for location buttons
+    document.getElementById('getCurrentLocationPickup').addEventListener('click', function() {
+        const pickupInput = document.getElementById('pickup_location');
+        getCurrentLocation(pickupInput, this);
+    });
+    
+    document.getElementById('getCurrentLocationReturn').addEventListener('click', function() {
+        const returnInput = document.getElementById('return_location');
+        getCurrentLocation(returnInput, this);
+    });
+
+    // Form validation
+    document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        if (!pickupDate.value || !returnDate.value) {
+            e.preventDefault();
+            alert('Please select both pickup and return dates');
+            return;
+        }
+        
+        const pickup = new Date(pickupDate.value);
+        const return_d = new Date(returnDate.value);
+        
+        if (return_d <= pickup) {
+            e.preventDefault();
+            alert('Return date must be after pickup date');
+            return;
+        }
+        
+        if (pickup < new Date()) {
+            e.preventDefault();
+            alert('Pickup date cannot be in the past');
+            return;
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Company Profile - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="mb-0">
+                        <i class="fas fa-building"></i> Company Profile
+                    </h1>
+                    <p class="lead mb-0">View and manage your rental company information</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('edit_vehicle_rental_profile') }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit Profile
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-building"></i> {{ rental.name }}
+                    </h2>
+                    <p class="mb-0">
+                        <span class="badge {% if rental.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                            {% if rental.is_approved %}Approved{% else %}Pending Approval{% endif %}
+                        </span>
+                    </p>
+                </div>
+                <div class="card-body">
+                    {% if rental.profile_picture %}
+                        <div class="text-center mb-4">
+                            <img src="{{ url_for('static', filename=rental.profile_picture) }}" 
+                                 alt="{{ rental.name }}" class="img-fluid rounded" 
+                                 style="max-height: 200px; max-width: 300px;">
+                        </div>
+                    {% endif %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-info-circle"></i> Company Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Company Name:</strong></td>
+                                    <td>{{ rental.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Description:</strong></td>
+                                    <td>{{ rental.description or 'No description provided' }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        <span class="badge {% if rental.is_approved %}bg-success{% else %}bg-warning{% endif %}">
+                                            {% if rental.is_approved %}Approved{% else %}Pending Approval{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Registration Date:</strong></td>
+                                    <td>{{ rental.created_at.strftime('%B %d, %Y') }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-map-marker-alt"></i> Location</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Address:</strong></td>
+                                    <td>{{ rental.address }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>City:</strong></td>
+                                    <td>{{ rental.city }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>State:</strong></td>
+                                    <td>{{ rental.state }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Country:</strong></td>
+                                    <td>{{ rental.country }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-phone"></i> Contact Information</h5>
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Phone:</strong></td>
+                                    <td>{{ rental.phone }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ rental.email }}</td>
+                                </tr>
+                                {% if rental.website %}
+                                <tr>
+                                    <td><strong>Website:</strong></td>
+                                    <td><a href="{{ rental.website }}" target="_blank">{{ rental.website }}</a></td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5><i class="fas fa-concierge-bell"></i> Services & Amenities</h5>
+                            {% if rental.amenities %}
+                                {% set amenities_list = rental.amenities|from_json %}
+                                {% if amenities_list %}
+                                    <ul class="list-unstyled">
+                                        {% for amenity in amenities_list %}
+                                            <li><i class="fas fa-check text-success"></i> {{ amenity }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p class="text-muted">No amenities specified</p>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted">No amenities specified</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <h5><i class="fas fa-chart-bar"></i> Business Statistics</h5>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-primary">{{ rental.vehicles|length }}</h4>
+                                        <p class="text-muted">Total Vehicles</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-success">{{ rental.bookings|length }}</h4>
+                                        <p class="text-muted">Total Bookings</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-warning">{{ rental.bookings|selectattr('status', 'equalto', 'pending')|list|length }}</h4>
+                                        <p class="text-muted">Pending Bookings</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="text-center">
+                                        <h4 class="text-info">{{ rental.bookings|selectattr('status', 'equalto', 'confirmed')|list|length }}</h4>
+                                        <p class="text-muted">Confirmed Bookings</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cog"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('vehicle_rental_dashboard') }}" class="btn btn-primary">
+                            <i class="fas fa-tachometer-alt"></i> Dashboard
+                        </a>
+                        <a href="{{ url_for('edit_vehicle_rental_profile') }}" class="btn btn-warning">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </a>
+                        {% if rental.is_approved %}
+                            <a href="{{ url_for('add_vehicle', rental_id=rental.id) }}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add Vehicle
+                            </a>
+                        {% else %}
+                            <button class="btn btn-success" disabled title="Wait for admin approval">
+                                <i class="fas fa-plus"></i> Add Vehicle
+                            </button>
+                        {% endif %}
+                        <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-eye"></i> View All Rentals
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle"></i> Status Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% if rental.is_approved %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-check-circle"></i>
+                            <strong>Approved!</strong> Your company is approved and active.
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock"></i>
+                            <strong>Pending Approval</strong> Your company is under review by our admin team.
+                        </div>
+                    {% endif %}
+                    
+                    <p class="text-muted small">
+                        Once approved, you'll be able to add vehicles and start receiving bookings from tourists.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

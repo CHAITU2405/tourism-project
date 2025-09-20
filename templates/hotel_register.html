@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+
+{% block title %}Register Hotel - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-custom">
+                <div class="card-body p-5">
+                    <div class="text-center mb-4">
+                        <h2 class="text-gradient">Register Your Hotel</h2>
+                        <p class="text-muted">Add your property to our platform and start receiving bookings</p>
+                    </div>
+
+                    <form method="POST" class="needs-validation" novalidate>
+                        <!-- Basic Information -->
+                        <div class="mb-4">
+                            <h4 class="border-bottom pb-2">Basic Information</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="name" class="form-label">Hotel Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                                <div class="invalid-feedback">
+                                    Please provide the hotel name.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="star_rating" class="form-label">Star Rating *</label>
+                                <select class="form-control" id="star_rating" name="star_rating" required>
+                                    <option value="">Select rating</option>
+                                    <option value="1">1 Star</option>
+                                    <option value="2">2 Stars</option>
+                                    <option value="3">3 Stars</option>
+                                    <option value="4">4 Stars</option>
+                                    <option value="5">5 Stars</option>
+                                </select>
+                                <div class="invalid-feedback">
+                                    Please select a star rating.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Description *</label>
+                            <textarea class="form-control" id="description" name="description" rows="4" required placeholder="Describe your hotel, its unique features, and what makes it special..."></textarea>
+                            <div class="invalid-feedback">
+                                Please provide a description of your hotel.
+                            </div>
+                        </div>
+
+                        <!-- Location Information -->
+                        <div class="mb-4 mt-5">
+                            <h4 class="border-bottom pb-2">Location Information</h4>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Street Address *</label>
+                            <input type="text" class="form-control" id="address" name="address" required placeholder="123 Main Street">
+                            <div class="invalid-feedback">
+                                Please provide the street address.
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="city" class="form-label">City *</label>
+                                <input type="text" class="form-control" id="city" name="city" required>
+                                <div class="invalid-feedback">
+                                    Please provide the city.
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="state" class="form-label">State/Province *</label>
+                                <input type="text" class="form-control" id="state" name="state" required>
+                                <div class="invalid-feedback">
+                                    Please provide the state or province.
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="country" class="form-label">Country *</label>
+                                <input type="text" class="form-control" id="country" name="country" required>
+                                <div class="invalid-feedback">
+                                    Please provide the country.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contact Information -->
+                        <div class="mb-4 mt-5">
+                            <h4 class="border-bottom pb-2">Contact Information</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="phone" class="form-label">Phone Number *</label>
+                                <input type="tel" class="form-control" id="phone" name="phone" required>
+                                <div class="invalid-feedback">
+                                    Please provide a phone number.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="invalid-feedback">
+                                    Please provide a valid email address.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="website" class="form-label">Website (Optional)</label>
+                            <input type="url" class="form-control" id="website" name="website" placeholder="https://www.yourhotel.com">
+                        </div>
+
+                        <!-- Pricing and Rooms -->
+                        <div class="mb-4 mt-5">
+                            <h4 class="border-bottom pb-2">Pricing and Availability</h4>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="price_per_night" class="form-label">Price per Night (USD) *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="price_per_night" name="price_per_night" 
+                                           min="1" step="0.01" required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Please provide a valid price per night.
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="total_rooms" class="form-label">Total Rooms *</label>
+                                <input type="number" class="form-control" id="total_rooms" name="total_rooms" 
+                                       min="1" required>
+                                <div class="invalid-feedback">
+                                    Please provide the total number of rooms.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Amenities -->
+                        <div class="mb-4 mt-5">
+                            <h4 class="border-bottom pb-2">Amenities</h4>
+                            <p class="text-muted">Select the amenities available at your hotel</p>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Free WiFi" id="wifi">
+                                    <label class="form-check-label" for="wifi">Free WiFi</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Parking" id="parking">
+                                    <label class="form-check-label" for="parking">Parking</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Pool" id="pool">
+                                    <label class="form-check-label" for="pool">Swimming Pool</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Gym" id="gym">
+                                    <label class="form-check-label" for="gym">Fitness Center</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Restaurant" id="restaurant">
+                                    <label class="form-check-label" for="restaurant">Restaurant</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Spa" id="spa">
+                                    <label class="form-check-label" for="spa">Spa Services</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Room Service" id="room_service">
+                                    <label class="form-check-label" for="room_service">Room Service</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Airport Shuttle" id="shuttle">
+                                    <label class="form-check-label" for="shuttle">Airport Shuttle</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Pet Friendly" id="pet_friendly">
+                                    <label class="form-check-label" for="pet_friendly">Pet Friendly</label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="amenity" value="Business Center" id="business">
+                                    <label class="form-check-label" for="business">Business Center</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="custom_amenities" class="form-label">Additional Amenities</label>
+                            <textarea class="form-control" id="custom_amenities" name="custom_amenities" rows="2" 
+                                      placeholder="List any additional amenities not covered above (one per line)"></textarea>
+                        </div>
+
+                        <!-- Terms and Conditions -->
+                        <div class="mb-4">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="terms" required>
+                                <label class="form-check-label" for="terms">
+                                    I agree to the <a href="#" class="text-primary">Hotel Terms and Conditions</a> and confirm that all information provided is accurate.
+                                </label>
+                                <div class="invalid-feedback">
+                                    You must agree to the terms and conditions.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-hotel"></i> Register Hotel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Collect amenities and store as JSON
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const amenityCheckboxes = document.querySelectorAll('input[name="amenity"]:checked');
+        const customAmenities = document.getElementById('custom_amenities').value.split('\n').filter(a => a.trim());
+        
+        const amenities = Array.from(amenityCheckboxes).map(cb => cb.value);
+        amenities.push(...customAmenities);
+        
+        // Create hidden input for amenities
+        const amenitiesInput = document.createElement('input');
+        amenitiesInput.type = 'hidden';
+        amenitiesInput.name = 'amenities';
+        amenitiesInput.value = JSON.stringify(amenities);
+        form.appendChild(amenitiesInput);
+    });
+
+    // Price validation
+    const priceInput = document.getElementById('price_per_night');
+    priceInput.addEventListener('input', function() {
+        const price = parseFloat(this.value);
+        if (price < 1) {
+            this.setCustomValidity('Price must be at least $1');
+        } else if (price > 10000) {
+            this.setCustomValidity('Price seems too high. Please verify.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+
+    // Room count validation
+    const roomsInput = document.getElementById('total_rooms');
+    roomsInput.addEventListener('input', function() {
+        const rooms = parseInt(this.value);
+        if (rooms < 1) {
+            this.setCustomValidity('Must have at least 1 room');
+        } else if (rooms > 1000) {
+            this.setCustomValidity('Room count seems too high. Please verify.');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

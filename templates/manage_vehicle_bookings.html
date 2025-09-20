@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Vehicle Bookings - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-4">
+                <i class="fas fa-car"></i> My Vehicle Bookings
+            </h1>
+            <p class="lead">Manage your vehicle rental bookings</p>
+        </div>
+    </div>
+
+    {% if bookings %}
+        <div class="row">
+            {% for booking in bookings %}
+                <div class="col-lg-6 col-xl-4 mb-4">
+                    <div class="card h-100 shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h6 class="mb-0">
+                                <i class="fas fa-car"></i> {{ booking.vehicle.make }} {{ booking.vehicle.model }}
+                            </h6>
+                            <span class="badge 
+                                {% if booking.status == 'confirmed' %}bg-success
+                                {% elif booking.status == 'pending' %}bg-warning
+                                {% elif booking.status == 'cancelled' %}bg-danger
+                                {% else %}bg-info{% endif %}">
+                                {{ booking.status.title() }}
+                            </span>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="text-primary">{{ booking.rental_company.name }}</h6>
+                                <p class="text-muted mb-0">
+                                    <i class="fas fa-map-marker-alt"></i> {{ booking.rental_company.city }}, {{ booking.rental_company.state }}
+                                </p>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Pickup Date</small>
+                                        <div><strong>{{ booking.pickup_date.strftime('%b %d, %Y') }}</strong></div>
+                                        <small class="text-muted">{{ booking.pickup_time.strftime('%I:%M %p') }}</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Return Date</small>
+                                        <div><strong>{{ booking.return_date.strftime('%b %d, %Y') }}</strong></div>
+                                        <small class="text-muted">{{ booking.return_time.strftime('%I:%M %p') }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <small class="text-muted">Duration</small>
+                                        <div><strong>{{ (booking.return_date - booking.pickup_date).days }} day(s)</strong></div>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">Total Amount</small>
+                                        <div><strong class="text-success">₹{{ booking.total_amount }}</strong></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Vehicle Details</small>
+                                <div>
+                                    <span class="badge bg-secondary me-1">{{ booking.vehicle.vehicle_type.title() }}</span>
+                                    <span class="badge bg-secondary me-1">{{ booking.vehicle.seating_capacity }} seats</span>
+                                    <span class="badge bg-secondary">{{ booking.vehicle.transmission.title() }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <small class="text-muted">Booking Reference</small>
+                                <div><code>{{ booking.booking_reference }}</code></div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <small class="text-muted">Booked on</small>
+                                    <div>{{ booking.created_at.strftime('%b %d, %Y') }}</div>
+                                </div>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" 
+                                            data-bs-toggle="modal" data-bs-target="#bookingModal{{ booking.id }}">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    {% if booking.status == 'pending' %}
+                                        <button type="button" class="btn btn-outline-danger btn-sm">
+                                            <i class="fas fa-times"></i> Cancel
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Booking Detail Modal -->
+                <div class="modal fade" id="bookingModal{{ booking.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i class="fas fa-car"></i> Booking Details
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-car"></i> Vehicle Information</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Vehicle:</strong></td>
+                                                <td>{{ booking.vehicle.make }} {{ booking.vehicle.model }} ({{ booking.vehicle.year }})</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Type:</strong></td>
+                                                <td>{{ booking.vehicle.vehicle_type.title() }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Seating:</strong></td>
+                                                <td>{{ booking.vehicle.seating_capacity }} seats</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Transmission:</strong></td>
+                                                <td>{{ booking.vehicle.transmission.title() }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Fuel Type:</strong></td>
+                                                <td>{{ booking.vehicle.fuel_type.title() }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-building"></i> Rental Company</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Company:</strong></td>
+                                                <td>{{ booking.rental_company.name }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Address:</strong></td>
+                                                <td>{{ booking.rental_company.address }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Phone:</strong></td>
+                                                <td>{{ booking.rental_company.phone }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Email:</strong></td>
+                                                <td>{{ booking.rental_company.email }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-calendar-alt"></i> Rental Period</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Pickup:</strong></td>
+                                                <td>{{ booking.pickup_date.strftime('%B %d, %Y') }} at {{ booking.pickup_time.strftime('%I:%M %p') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Return:</strong></td>
+                                                <td>{{ booking.return_date.strftime('%B %d, %Y') }} at {{ booking.return_time.strftime('%I:%M %p') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Duration:</strong></td>
+                                                <td>{{ (booking.return_date - booking.pickup_date).days }} day(s)</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-map-marker-alt"></i> Locations</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Pickup:</strong></td>
+                                                <td>{{ booking.pickup_location }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Return:</strong></td>
+                                                <td>{{ booking.return_location }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <hr>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-receipt"></i> Booking Information</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Reference:</strong></td>
+                                                <td><code>{{ booking.booking_reference }}</code></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Status:</strong></td>
+                                                <td><span class="badge 
+                                                    {% if booking.status == 'confirmed' %}bg-success
+                                                    {% elif booking.status == 'pending' %}bg-warning
+                                                    {% elif booking.status == 'cancelled' %}bg-danger
+                                                    {% else %}bg-info{% endif %}">
+                                                    {{ booking.status.title() }}
+                                                </span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Payment:</strong></td>
+                                                <td><span class="badge 
+                                                    {% if booking.payment_status == 'paid' %}bg-success
+                                                    {% elif booking.payment_status == 'pending' %}bg-warning
+                                                    {% else %}bg-info{% endif %}">
+                                                    {{ booking.payment_status.title() }}
+                                                </span></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Total Amount:</strong></td>
+                                                <td><strong class="text-success">₹{{ booking.total_amount }}</strong></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-id-card"></i> Driver Information</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>License:</strong></td>
+                                                <td>{{ booking.drivers_license }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Expiry:</strong></td>
+                                                <td>{{ booking.drivers_license_expiry.strftime('%B %d, %Y') }}</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                {% if booking.special_requests %}
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <h6><i class="fas fa-comment"></i> Special Requests</h6>
+                                            <p class="text-muted">{{ booking.special_requests }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                {% if booking.status == 'pending' %}
+                                    <button type="button" class="btn btn-danger">
+                                        <i class="fas fa-times"></i> Cancel Booking
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="row">
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-car fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No vehicle bookings found</h4>
+                    <p class="text-muted">You haven't made any vehicle rental bookings yet</p>
+                    <a href="{{ url_for('vehicle_rentals') }}" class="btn btn-primary">
+                        <i class="fas fa-car"></i> Browse Vehicles
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.badge {
+    font-size: 0.75em;
+}
+
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}

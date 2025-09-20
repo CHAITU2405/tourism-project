@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+
+{% block title %}Add Vehicle - {{ rental.name }} - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-success text-white">
+                    <h2 class="mb-0">
+                        <i class="fas fa-car"></i> Add New Rental Vehicle
+                    </h2>
+                    <p class="mb-0">{{ rental.name }} • {{ rental.city }} • Vehicle Rental Fleet</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-info-circle"></i> Vehicle Information</h5>
+                                <div class="mb-3">
+                                    <label for="make" class="form-label">Make *</label>
+                                    <input type="text" class="form-control" id="make" name="make" 
+                                           placeholder="e.g., Toyota, Honda, Ford" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="model" class="form-label">Model *</label>
+                                    <input type="text" class="form-control" id="model" name="model" 
+                                           placeholder="e.g., Camry, Civic, Focus" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="year" class="form-label">Year *</label>
+                                    <input type="number" class="form-control" id="year" name="year" 
+                                           min="2000" max="2024" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="vehicle_type" class="form-label">Vehicle Type *</label>
+                                    <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="car">Car</option>
+                                        <option value="bike">Bike</option>
+                                        <option value="scooty">Scooty</option>
+                                        <option value="bicycle">Bicycle</option>
+                                        <option value="mini_van">Mini Van</option>
+                                        <option value="jeep">Jeep</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-cog"></i> Technical Specifications</h5>
+                                <div class="mb-3">
+                                    <label for="transmission" class="form-label">Transmission *</label>
+                                    <select class="form-select" id="transmission" name="transmission" required>
+                                        <option value="">Select Transmission</option>
+                                        <option value="automatic">Automatic</option>
+                                        <option value="manual">Manual</option>
+                                        <option value="cvt">CVT</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fuel_type" class="form-label">Fuel Type *</label>
+                                    <select class="form-select" id="fuel_type" name="fuel_type" required>
+                                        <option value="">Select Fuel Type</option>
+                                        <option value="petrol">Petrol</option>
+                                        <option value="diesel">Diesel</option>
+                                        <option value="electric">Electric</option>
+                                        <option value="hybrid">Hybrid</option>
+                                        <option value="cng">CNG</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="seating_capacity" class="form-label">Seating Capacity *</label>
+                                    <input type="number" class="form-control" id="seating_capacity" name="seating_capacity" 
+                                           min="2" max="12" required>
+                                </div>
+                                <div class="mb-3" id="luggage_capacity_field" style="display: none;">
+                                    <label for="luggage_capacity" class="form-label">Luggage Capacity</label>
+                                    <input type="text" class="form-control" id="luggage_capacity" name="luggage_capacity" 
+                                           placeholder="e.g., 2 large bags, 3 medium bags">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-chart-line"></i> Performance & Pricing</h5>
+                                <div class="mb-3">
+                                    <label for="mileage" class="form-label">Mileage</label>
+                                    <input type="text" class="form-control" id="mileage" name="mileage" 
+                                           placeholder="e.g., 15 km/l, 20 km/l">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price_per_day" class="form-label">Price per Day (₹) *</label>
+                                    <input type="number" class="form-control" id="price_per_day" name="price_per_day" 
+                                           min="0" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price_per_hour" class="form-label">Price per Hour (₹)</label>
+                                    <input type="number" class="form-control" id="price_per_hour" name="price_per_hour" 
+                                           min="0" step="0.01" placeholder="Optional">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-concierge-bell"></i> Features & Inventory</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Vehicle Features:</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature1" name="features" value="Air Conditioning">
+                                                <label class="form-check-label" for="feature1">Air Conditioning</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature2" name="features" value="GPS Navigation">
+                                                <label class="form-check-label" for="feature2">GPS Navigation</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature3" name="features" value="Bluetooth">
+                                                <label class="form-check-label" for="feature3">Bluetooth</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature4" name="features" value="USB Charging">
+                                                <label class="form-check-label" for="feature4">USB Charging</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature5" name="features" value="Backup Camera">
+                                                <label class="form-check-label" for="feature5">Backup Camera</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature6" name="features" value="Sunroof">
+                                                <label class="form-check-label" for="feature6">Sunroof</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature7" name="features" value="Leather Seats">
+                                                <label class="form-check-label" for="feature7">Leather Seats</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature8" name="features" value="Child Safety Seats">
+                                                <label class="form-check-label" for="feature8">Child Safety Seats</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="vehicle_image" class="form-label">Vehicle Image *</label>
+                                    <input type="file" class="form-control" id="vehicle_image" name="vehicle_image" 
+                                           accept="image/*" required>
+                                    <div class="form-text">Upload a clear image of the vehicle (JPG, PNG, GIF)</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="total_vehicles" class="form-label">Total Vehicles Available *</label>
+                                    <input type="number" class="form-control" id="total_vehicles" name="total_vehicles" 
+                                           min="1" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Important Information:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Rental Vehicles Only:</strong> These are vehicles for rent, not cabs or taxis</li>
+                                        <li>Make sure all vehicle information is accurate and up-to-date</li>
+                                        <li>Pricing should be competitive and reflect the vehicle's condition and features</li>
+                                        <li>You can update vehicle information later from your dashboard</li>
+                                        <li>Vehicle availability will be automatically managed based on bookings</li>
+                                        <li>Customers will rent these vehicles for self-driving purposes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('vehicle_rental_dashboard') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add Vehicle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vehicle type change handler
+    const vehicleType = document.getElementById('vehicle_type');
+    const luggageField = document.getElementById('luggage_capacity_field');
+    const luggageInput = document.getElementById('luggage_capacity');
+    
+    function toggleLuggageCapacity() {
+        const selectedType = vehicleType.value;
+        const noLuggageTypes = ['bicycle', 'bike', 'scooty'];
+        
+        if (noLuggageTypes.includes(selectedType)) {
+            luggageField.style.display = 'none';
+            luggageInput.value = ''; // Clear the value
+        } else {
+            luggageField.style.display = 'block';
+        }
+    }
+    
+    vehicleType.addEventListener('change', toggleLuggageCapacity);
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = ['make', 'model', 'year', 'vehicle_type', 'transmission', 'fuel_type', 'seating_capacity', 'price_per_day', 'total_vehicles'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldName => {
+            const field = document.getElementById(fieldName);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Year validation
+        const year = document.getElementById('year');
+        const currentYear = new Date().getFullYear();
+        if (year.value && (year.value < 2000 || year.value > currentYear)) {
+            year.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Seating capacity validation
+        const seating = document.getElementById('seating_capacity');
+        if (seating.value && (seating.value < 2 || seating.value > 12)) {
+            seating.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Price validation
+        const pricePerDay = document.getElementById('price_per_day');
+        if (pricePerDay.value && pricePerDay.value <= 0) {
+            pricePerDay.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly');
+        }
+    });
+    
+    // Set current year as default for year field
+    const yearField = document.getElementById('year');
+    if (!yearField.value) {
+        yearField.value = new Date().getFullYear();
+    }
+});
+</script>
+{% endblock %}

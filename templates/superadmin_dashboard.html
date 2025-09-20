@@ -1,0 +1,655 @@
+{% extends "base.html" %}
+
+{% block title %}Super Admin Dashboard - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2><i class="fas fa-crown"></i> Super Admin Dashboard</h2>
+                <div class="btn-group">
+                    <a href="{{ url_for('admin_complaints') }}" class="btn btn-warning">
+                        <i class="fas fa-comment-dots"></i> {{ _('Manage Complaints') }}
+                    </a>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAdminModal">
+                        <i class="fas fa-user-plus"></i> Add Admin
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="exportData()">
+                        <i class="fas fa-download"></i> Export Data
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ users|length }}</div>
+                        <div class="label">Total Users</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ all_hotels|length }}</div>
+                        <div class="label">Total Hotels</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ pending_hotels|length }}</div>
+                        <div class="label">Pending Hotels</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ approved_hotels|length }}</div>
+                        <div class="label">Approved Hotels</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ pending_vehicle_rentals|length }}</div>
+                        <div class="label">Pending Vehicle Rentals</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ approved_vehicle_rentals|length }}</div>
+                        <div class="label">Approved Vehicle Rentals</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card dashboard-card text-center">
+                <div class="card-body">
+                    <div class="dashboard-stat">
+                        <div class="number">{{ admins|length }}</div>
+                        <div class="label">Admins</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Hotels Section -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-clock"></i> Pending Hotel Approvals</h4>
+                </div>
+                <div class="card-body">
+                    {% if pending_hotels %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Hotel Name</th>
+                                        <th>Owner</th>
+                                        <th>Location</th>
+                                        <th>Rating</th>
+                                        <th>Price/Night</th>
+                                        <th>Submitted</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hotel in pending_hotels %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ hotel.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ hotel.description[:50] }}{% if hotel.description|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </td>
+                                            <td>{{ hotel.owner.first_name }} {{ hotel.owner.last_name }}</td>
+                                            <td>{{ hotel.city }}, {{ hotel.state }}</td>
+                                            <td>
+                                                <div class="hotel-rating">
+                                                    {% for i in range(hotel.rating|int) %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% endfor %}
+                                                    {% for i in range(5 - hotel.rating|int) %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            </td>
+                                            <td>${{ "%.2f"|format(hotel.price_per_night) }}</td>
+                                            <td>{{ hotel.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                            data-bs-toggle="modal" data-bs-target="#hotelModal{{ hotel.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <a href="{{ url_for('approve_hotel', hotel_id=hotel.id) }}" 
+                                                       class="btn btn-sm btn-success"
+                                                       onclick="return confirm('Approve this hotel?')">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('reject_hotel', hotel_id=hotel.id) }}" 
+                                                       class="btn btn-sm btn-danger"
+                                                       onclick="return confirm('Reject and delete this hotel? This action cannot be undone.')">
+                                                        <i class="fas fa-times"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h4 class="text-muted">No pending approvals</h4>
+                            <p class="text-muted">All hotels have been reviewed!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved Hotels Section -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-check-circle"></i> Approved Hotels</h4>
+                </div>
+                <div class="card-body">
+                    {% if approved_hotels %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Hotel Name</th>
+                                        <th>Owner</th>
+                                        <th>Location</th>
+                                        <th>Rating</th>
+                                        <th>Price/Night</th>
+                                        <th>Approved</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hotel in approved_hotels %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ hotel.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ hotel.description[:50] }}{% if hotel.description|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </td>
+                                            <td>{{ hotel.owner.first_name }} {{ hotel.owner.last_name }}</td>
+                                            <td>{{ hotel.city }}, {{ hotel.state }}</td>
+                                            <td>
+                                                <div class="hotel-rating">
+                                                    {% for i in range(hotel.rating|int) %}
+                                                        <i class="fas fa-star"></i>
+                                                    {% endfor %}
+                                                    {% for i in range(5 - hotel.rating|int) %}
+                                                        <i class="far fa-star"></i>
+                                                    {% endfor %}
+                                                </div>
+                                            </td>
+                                            <td>${{ "%.2f"|format(hotel.price_per_night) }}</td>
+                                            <td>{{ hotel.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                <span class="badge badge-approved">Active</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-hotel fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No approved hotels</h4>
+                            <p class="text-muted">Hotels will appear here once they are approved.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Vehicle Rentals Section -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-car"></i> Pending Vehicle Rental Approvals</h4>
+                </div>
+                <div class="card-body">
+                    {% if pending_vehicle_rentals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Company Name</th>
+                                        <th>Owner</th>
+                                        <th>Location</th>
+                                        <th>Contact</th>
+                                        <th>Submitted</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rental in pending_vehicle_rentals %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ rental.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ rental.description[:50] }}{% if rental.description|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </td>
+                                            <td>{{ rental.owner.first_name }} {{ rental.owner.last_name }}</td>
+                                            <td>{{ rental.city }}, {{ rental.state }}</td>
+                                            <td>{{ rental.phone }}</td>
+                                            <td>{{ rental.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                                            data-bs-toggle="modal" data-bs-target="#rentalModal{{ rental.id }}">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                    <a href="{{ url_for('approve_vehicle_rental', rental_id=rental.id) }}" 
+                                                       class="btn btn-sm btn-success"
+                                                       onclick="return confirm('Approve this vehicle rental company?')">
+                                                        <i class="fas fa-check"></i>
+                                                    </a>
+                                                    <a href="{{ url_for('reject_vehicle_rental', rental_id=rental.id) }}" 
+                                                       class="btn btn-sm btn-danger"
+                                                       onclick="return confirm('Reject and delete this vehicle rental company? This action cannot be undone.')">
+                                                        <i class="fas fa-times"></i>
+                                                    </a>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                            <h4 class="text-muted">No pending vehicle rental approvals</h4>
+                            <p class="text-muted">All vehicle rental companies have been reviewed!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Approved Vehicle Rentals Section -->
+    <div class="row mb-4">
+        <div class="col-lg-12">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-car"></i> Approved Vehicle Rentals</h4>
+                </div>
+                <div class="card-body">
+                    {% if approved_vehicle_rentals %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Company Name</th>
+                                        <th>Owner</th>
+                                        <th>Location</th>
+                                        <th>Contact</th>
+                                        <th>Approved</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for rental in approved_vehicle_rentals %}
+                                        <tr>
+                                            <td>
+                                                <div>
+                                                    <strong>{{ rental.name }}</strong>
+                                                    <br>
+                                                    <small class="text-muted">{{ rental.description[:50] }}{% if rental.description|length > 50 %}...{% endif %}</small>
+                                                </div>
+                                            </td>
+                                            <td>{{ rental.owner.first_name }} {{ rental.owner.last_name }}</td>
+                                            <td>{{ rental.city }}, {{ rental.state }}</td>
+                                            <td>{{ rental.phone }}</td>
+                                            <td>{{ rental.created_at.strftime('%b %d, %Y') }}</td>
+                                            <td>
+                                                <span class="badge badge-approved">Active</span>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-car fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No approved vehicle rentals</h4>
+                            <p class="text-muted">Vehicle rental companies will appear here once they are approved.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users and Admins Section -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-users"></i> All Users</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Joined</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in users %}
+                                    <tr>
+                                        <td>{{ user.username }}</td>
+                                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                        <td>{{ user.email }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'primary' if user.role == 'user' else 'success' if user.role == 'hotel' else 'warning' if user.role == 'admin' else 'danger' }}">
+                                                {{ user.role.title() }}
+                                            </span>
+                                        </td>
+                                        <td>{{ user.created_at.strftime('%b %d, %Y') }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h4 class="mb-0"><i class="fas fa-user-shield"></i> Admin Users</h4>
+                </div>
+                <div class="card-body">
+                    {% if admins %}
+                        {% for admin in admins %}
+                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded">
+                                <div>
+                                    <strong>{{ admin.user.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ admin.user.email }}</small>
+                                </div>
+                                <span class="badge bg-warning">Admin</span>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-user-shield fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No admin users</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Hotel Detail Modals -->
+{% for hotel in pending_hotels %}
+<div class="modal fade" id="hotelModal{{ hotel.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ hotel.name }} - Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Hotel Information</h6>
+                        <p><strong>Name:</strong> {{ hotel.name }}</p>
+                        <p><strong>Rating:</strong> 
+                            {% for i in range(hotel.rating|int) %}
+                                <i class="fas fa-star text-warning"></i>
+                            {% endfor %}
+                            {% for i in range(5 - hotel.rating|int) %}
+                                <i class="far fa-star text-warning"></i>
+                            {% endfor %}
+                        </p>
+                        <p><strong>Price per Night:</strong> ${{ "%.2f"|format(hotel.price_per_night) }}</p>
+                        <p><strong>Total Rooms:</strong> {{ hotel.total_rooms }}</p>
+                        <p><strong>Description:</strong></p>
+                        <p class="text-muted">{{ hotel.description }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Owner Information</h6>
+                        <p><strong>Name:</strong> {{ hotel.owner.first_name }} {{ hotel.owner.last_name }}</p>
+                        <p><strong>Username:</strong> {{ hotel.owner.username }}</p>
+                        <p><strong>Email:</strong> {{ hotel.owner.email }}</p>
+                        <p><strong>Phone:</strong> {{ hotel.owner.phone or 'Not provided' }}</p>
+                        
+                        <h6 class="mt-3">Location</h6>
+                        <p><strong>Address:</strong> {{ hotel.address }}</p>
+                        <p><strong>City:</strong> {{ hotel.city }}</p>
+                        <p><strong>State:</strong> {{ hotel.state }}</p>
+                        <p><strong>Country:</strong> {{ hotel.country }}</p>
+                        
+                        <h6 class="mt-3">Contact</h6>
+                        <p><strong>Phone:</strong> {{ hotel.phone }}</p>
+                        <p><strong>Email:</strong> {{ hotel.email }}</p>
+                        {% if hotel.website %}
+                            <p><strong>Website:</strong> <a href="{{ hotel.website }}" target="_blank">{{ hotel.website }}</a></p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if hotel.amenities %}
+                    <div class="mt-3">
+                        <h6>Amenities</h6>
+                        <div class="row">
+                            {% set amenities = hotel.amenities|from_json %}
+                            {% for amenity in amenities %}
+                                <div class="col-md-6">
+                                    <i class="fas fa-check text-success me-2"></i>{{ amenity }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('reject_hotel', hotel_id=hotel.id) }}" 
+                   class="btn btn-danger"
+                   onclick="return confirm('Reject and delete this hotel? This action cannot be undone.')">
+                    <i class="fas fa-times"></i> Reject
+                </a>
+                <a href="{{ url_for('approve_hotel', hotel_id=hotel.id) }}" 
+                   class="btn btn-success"
+                   onclick="return confirm('Approve this hotel?')">
+                    <i class="fas fa-check"></i> Approve
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Vehicle Rental Detail Modals -->
+{% for rental in pending_vehicle_rentals %}
+<div class="modal fade" id="rentalModal{{ rental.id }}" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">{{ rental.name }} - Review</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Company Information</h6>
+                        <p><strong>Name:</strong> {{ rental.name }}</p>
+                        <p><strong>Description:</strong></p>
+                        <p class="text-muted">{{ rental.description }}</p>
+                        
+                        <h6 class="mt-3">Location</h6>
+                        <p><strong>Address:</strong> {{ rental.address }}</p>
+                        <p><strong>City:</strong> {{ rental.city }}</p>
+                        <p><strong>State:</strong> {{ rental.state }}</p>
+                        <p><strong>Country:</strong> {{ rental.country }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Owner Information</h6>
+                        <p><strong>Name:</strong> {{ rental.owner.first_name }} {{ rental.owner.last_name }}</p>
+                        <p><strong>Username:</strong> {{ rental.owner.username }}</p>
+                        <p><strong>Email:</strong> {{ rental.owner.email }}</p>
+                        <p><strong>Phone:</strong> {{ rental.owner.phone or 'Not provided' }}</p>
+                        
+                        <h6 class="mt-3">Contact</h6>
+                        <p><strong>Phone:</strong> {{ rental.phone }}</p>
+                        <p><strong>Email:</strong> {{ rental.email }}</p>
+                        {% if rental.website %}
+                            <p><strong>Website:</strong> <a href="{{ rental.website }}" target="_blank">{{ rental.website }}</a></p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if rental.amenities %}
+                    <div class="mt-3">
+                        <h6>Amenities</h6>
+                        <div class="row">
+                            {% set amenities = rental.amenities|from_json %}
+                            {% for amenity in amenities %}
+                                <div class="col-md-6">
+                                    <i class="fas fa-check text-success me-2"></i>{{ amenity }}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <a href="{{ url_for('reject_vehicle_rental', rental_id=rental.id) }}" 
+                   class="btn btn-danger"
+                   onclick="return confirm('Reject and delete this vehicle rental company? This action cannot be undone.')">
+                    <i class="fas fa-times"></i> Reject
+                </a>
+                <a href="{{ url_for('approve_vehicle_rental', rental_id=rental.id) }}" 
+                   class="btn btn-success"
+                   onclick="return confirm('Approve this vehicle rental company?')">
+                    <i class="fas fa-check"></i> Approve
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Add Admin Modal -->
+<div class="modal fade" id="addAdminModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Admin</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('add_admin') }}">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="user_id" class="form-label">Select User</label>
+                        <select class="form-control" id="user_id" name="user_id" required>
+                            <option value="">Choose a user to promote to admin</option>
+                            {% for user in users %}
+                                {% if user.role not in ['admin', 'superadmin'] %}
+                                    <option value="{{ user.id }}">{{ user.username }} ({{ user.first_name }} {{ user.last_name }})</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="permissions" class="form-label">Permissions (JSON)</label>
+                        <textarea class="form-control" id="permissions" name="permissions" rows="3" 
+                                  placeholder='["hotel_approval", "user_management", "booking_management"]'>["hotel_approval", "user_management", "booking_management"]</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function exportData() {
+    // In a real application, this would export data to JSON/CSV
+    const data = {
+        users: {{ users|length }},
+        pending_hotels: {{ pending_hotels|length }},
+        approved_hotels: {{ approved_hotels|length }},
+        admins: {{ admins|length }},
+        export_date: new Date().toISOString()
+    };
+    
+    const dataStr = JSON.stringify(data, null, 2);
+    const dataBlob = new Blob([dataStr], {type: 'application/json'});
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'tourism_data_export.json';
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+// Auto-refresh pending hotels count
+setInterval(function() {
+    // In a real application, you would make an AJAX call to check for new pending hotels
+    console.log('Checking for new pending hotels...');
+}, 30000); // Check every 30 seconds
+</script>
+{% endblock %}

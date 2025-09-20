@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Vehicle - TourismHub{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow-custom">
+                <div class="card-header">
+                    <h2 class="mb-0">
+                        <i class="fas fa-edit"></i> Edit Vehicle
+                    </h2>
+                    <p class="mb-0">{{ vehicle.make }} {{ vehicle.model }} • {{ rental.name }}</p>
+                </div>
+                <div class="card-body">
+                    <form method="POST" enctype="multipart/form-data">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-info-circle"></i> Vehicle Information</h5>
+                                <div class="mb-3">
+                                    <label for="make" class="form-label">Make *</label>
+                                    <input type="text" class="form-control" id="make" name="make" 
+                                           value="{{ vehicle.make }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="model" class="form-label">Model *</label>
+                                    <input type="text" class="form-control" id="model" name="model" 
+                                           value="{{ vehicle.model }}" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="year" class="form-label">Year *</label>
+                                    <input type="number" class="form-control" id="year" name="year" 
+                                           value="{{ vehicle.year }}" min="2000" max="2024" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="vehicle_type" class="form-label">Vehicle Type *</label>
+                                    <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+                                        <option value="">Select Type</option>
+                                        <option value="car" {% if vehicle.vehicle_type == 'car' %}selected{% endif %}>Car</option>
+                                        <option value="bike" {% if vehicle.vehicle_type == 'bike' %}selected{% endif %}>Bike</option>
+                                        <option value="scooty" {% if vehicle.vehicle_type == 'scooty' %}selected{% endif %}>Scooty</option>
+                                        <option value="bicycle" {% if vehicle.vehicle_type == 'bicycle' %}selected{% endif %}>Bicycle</option>
+                                        <option value="mini_van" {% if vehicle.vehicle_type == 'mini_van' %}selected{% endif %}>Mini Van</option>
+                                        <option value="jeep" {% if vehicle.vehicle_type == 'jeep' %}selected{% endif %}>Jeep</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-cog"></i> Technical Specifications</h5>
+                                <div class="mb-3">
+                                    <label for="transmission" class="form-label">Transmission *</label>
+                                    <select class="form-select" id="transmission" name="transmission" required>
+                                        <option value="">Select Transmission</option>
+                                        <option value="manual" {% if vehicle.transmission == 'manual' %}selected{% endif %}>Manual</option>
+                                        <option value="automatic" {% if vehicle.transmission == 'automatic' %}selected{% endif %}>Automatic</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="fuel_type" class="form-label">Fuel Type *</label>
+                                    <select class="form-select" id="fuel_type" name="fuel_type" required>
+                                        <option value="">Select Fuel Type</option>
+                                        <option value="petrol" {% if vehicle.fuel_type == 'petrol' %}selected{% endif %}>Petrol</option>
+                                        <option value="diesel" {% if vehicle.fuel_type == 'diesel' %}selected{% endif %}>Diesel</option>
+                                        <option value="electric" {% if vehicle.fuel_type == 'electric' %}selected{% endif %}>Electric</option>
+                                        <option value="hybrid" {% if vehicle.fuel_type == 'hybrid' %}selected{% endif %}>Hybrid</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="seating_capacity" class="form-label">Seating Capacity *</label>
+                                    <input type="number" class="form-control" id="seating_capacity" name="seating_capacity" 
+                                           value="{{ vehicle.seating_capacity }}" min="2" max="12" required>
+                                </div>
+                                <div class="mb-3" id="luggage_capacity_field" style="display: none;">
+                                    <label for="luggage_capacity" class="form-label">Luggage Capacity</label>
+                                    <input type="text" class="form-control" id="luggage_capacity" name="luggage_capacity" 
+                                           value="{{ vehicle.luggage_capacity or '' }}"
+                                           placeholder="e.g., 2 large bags, 3 medium bags">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-chart-line"></i> Performance & Pricing</h5>
+                                <div class="mb-3">
+                                    <label for="mileage" class="form-label">Mileage</label>
+                                    <input type="text" class="form-control" id="mileage" name="mileage" 
+                                           value="{{ vehicle.mileage or '' }}"
+                                           placeholder="e.g., 15 km/l, 20 km/l">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price_per_day" class="form-label">Price per Day (₹) *</label>
+                                    <input type="number" class="form-control" id="price_per_day" name="price_per_day" 
+                                           value="{{ vehicle.price_per_day }}" min="0" step="0.01" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="price_per_hour" class="form-label">Price per Hour (₹)</label>
+                                    <input type="number" class="form-control" id="price_per_hour" name="price_per_hour" 
+                                           value="{{ vehicle.price_per_hour or '' }}" min="0" step="0.01" placeholder="Optional">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <h5><i class="fas fa-concierge-bell"></i> Features & Inventory</h5>
+                                <div class="mb-3">
+                                    <label class="form-label">Vehicle Features:</label>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature1" name="features" value="Air Conditioning" {% if 'Air Conditioning' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature1">Air Conditioning</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature2" name="features" value="GPS Navigation" {% if 'GPS Navigation' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature2">GPS Navigation</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature3" name="features" value="Bluetooth" {% if 'Bluetooth' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature3">Bluetooth</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature4" name="features" value="USB Charging" {% if 'USB Charging' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature4">USB Charging</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature5" name="features" value="Power Steering" {% if 'Power Steering' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature5">Power Steering</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature6" name="features" value="Central Locking" {% if 'Central Locking' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature6">Central Locking</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature7" name="features" value="Leather Seats" {% if 'Leather Seats' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature7">Leather Seats</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="feature8" name="features" value="Child Safety Seats" {% if 'Child Safety Seats' in features_list %}checked{% endif %}>
+                                                <label class="form-check-label" for="feature8">Child Safety Seats</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="vehicle_image" class="form-label">Vehicle Image</label>
+                                    <input type="file" class="form-control" id="vehicle_image" name="vehicle_image" 
+                                           accept="image/*">
+                                    <div class="form-text">Upload a new image to replace the current one (optional)</div>
+                                    {% if vehicle.images %}
+                                        {% set vehicle_images = vehicle.images|from_json %}
+                                        {% if vehicle_images and vehicle_images[0] %}
+                                            <div class="mt-2">
+                                                <small class="text-muted">Current image:</small><br>
+                                                <img src="{{ url_for('static', filename=vehicle_images[0]) }}" 
+                                                     class="img-thumbnail" style="max-width: 150px; max-height: 100px;">
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+                                </div>
+                                <div class="mb-3">
+                                    <label for="total_vehicles" class="form-label">Total Vehicles Available *</label>
+                                    <input type="number" class="form-control" id="total_vehicles" name="total_vehicles" 
+                                           value="{{ vehicle.total_vehicles }}" min="1" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Important Information:</h6>
+                                    <ul class="mb-0">
+                                        <li><strong>Rental Vehicles Only:</strong> These are vehicles for rent, not cabs or taxis</li>
+                                        <li>Make sure all vehicle information is accurate and up-to-date</li>
+                                        <li>Pricing should be competitive and reflect the vehicle's condition and features</li>
+                                        <li>Vehicle availability will be automatically managed based on bookings</li>
+                                        <li>Customers will rent these vehicles for self-driving purposes</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('view_vehicles') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left"></i> Back to Vehicles
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Update Vehicle
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Vehicle type change handler
+    const vehicleType = document.getElementById('vehicle_type');
+    const luggageField = document.getElementById('luggage_capacity_field');
+    const luggageInput = document.getElementById('luggage_capacity');
+    
+    function toggleLuggageCapacity() {
+        const selectedType = vehicleType.value;
+        const noLuggageTypes = ['bicycle', 'bike', 'scooty'];
+        
+        if (noLuggageTypes.includes(selectedType)) {
+            luggageField.style.display = 'none';
+            luggageInput.value = ''; // Clear the value
+        } else {
+            luggageField.style.display = 'block';
+        }
+    }
+    
+    // Set initial state
+    toggleLuggageCapacity();
+    
+    vehicleType.addEventListener('change', toggleLuggageCapacity);
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = ['make', 'model', 'year', 'vehicle_type', 'transmission', 'fuel_type', 'seating_capacity', 'price_per_day', 'total_vehicles'];
+        let isValid = true;
+        
+        requiredFields.forEach(function(fieldName) {
+            const field = document.getElementById(fieldName);
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+            }
+        });
+        
+        // Year validation
+        const year = document.getElementById('year');
+        const currentYear = new Date().getFullYear();
+        if (year.value && (year.value < 2000 || year.value > currentYear)) {
+            year.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Seating capacity validation
+        const seating = document.getElementById('seating_capacity');
+        if (seating.value && (seating.value < 2 || seating.value > 12)) {
+            seating.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        // Price validation
+        const pricePerDay = document.getElementById('price_per_day');
+        if (pricePerDay.value && pricePerDay.value <= 0) {
+            pricePerDay.classList.add('is-invalid');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields correctly');
+        }
+    });
+});
+</script>
+{% endblock %}

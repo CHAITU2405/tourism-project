@@ -158,6 +158,22 @@ A comprehensive Flask-based tourism website with a hotel booking system featurin
 ### API Endpoints
 - `GET /api/room-availability/<hotel_id>` - Check room availability for specific dates
 
+### VAPI webhook (voice / watch bookings)
+Bookings can be made **manually** on the website or **via voice** through a watch (ESP32 → VAPI → this app).  
+User details (name, email, phone) are taken from the **database** using `username`; VAPI sends only `username` and `booking_type` plus booking details.
+
+- **Endpoint**: `POST /api/vapi/webhook`
+- **Auth** (optional): Set env `VAPI_WEBHOOK_SECRET`; then send header `X-VAPI-Secret` or `Authorization: Bearer <secret>`.
+- **Body**: JSON with `action`, `username` (for create actions), and action-specific fields. Response: `{ "success", "message" (for TTS), "data" }`.
+
+| action | purpose | body fields (from VAPI) |
+|--------|---------|-------------------------|
+| `list_hotels` | List approved hotels | optional: `city` |
+| `list_vehicles` | List available vehicles | optional: `city`, `vehicle_type` |
+| `create_hotel_booking` | Create hotel booking | **`username`**, **`booking_type`** (`"hotel"`), `hotel_id`, `check_in`, `check_out` (YYYY-MM-DD), `rooms`, `guests` — user details from DB |
+| `create_vehicle_booking` | Create vehicle booking | **`username`**, **`booking_type`** (`"vehicle"`), `vehicle_id`, `rental_company_id`, `pickup_date`, `return_date` (YYYY-MM-DD) — user details from DB |
+| `get_booking_status` | Get status by reference | `booking_reference`, optional: `type` (`hotel` or `vehicle`) |
+
 ### Admin Functions
 - `GET /superadmin/dashboard` - Super admin dashboard
 - `GET /approve_hotel/<hotel_id>` - Approve hotel

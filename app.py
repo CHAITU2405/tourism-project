@@ -27,7 +27,9 @@ from sqlalchemy import or_, and_
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tourism.db'
+# Database in instance folder only (Flask convention)
+os.makedirs(app.instance_path, exist_ok=True)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(app.instance_path, 'tourism.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 
@@ -130,55 +132,21 @@ app.config['LANGUAGES'] = {
     'nso': 'Sesotho sa Leboa'
 }
 
-# Load translations
-def load_translations():
-    translations = {}
-    translations_dir = 'translations'
-    if os.path.exists(translations_dir):
-        for lang_code in app.config['LANGUAGES'].keys():
-            lang_file = os.path.join(translations_dir, f'{lang_code}.json')
-            if os.path.exists(lang_file):
-                try:
-                    with open(lang_file, 'r', encoding='utf-8') as f:
-                        translations[lang_code] = json.load(f)
-                except:
-                    translations[lang_code] = {}
-            else:
-                translations[lang_code] = {}
-    return translations
-
-# Global translations dictionary
-TRANSLATIONS = load_translations()
-
+# No word mapping: UI strings shown as-is. Translator page uses GoogleTranslator (LANG_CONFIG, /api/translate).
 def get_locale():
-    # Check if language is set in session
-    if 'language' in session:
-        return session['language']
-    # Check if language is set in request args
-    if request.args.get('lang'):
-        return request.args.get('lang')
-    # Return default locale
     return 'en'
 
 def _(text, lang=None):
-    """Translation function"""
-    if lang is None:
-        lang = get_locale()
-    
-    if lang in TRANSLATIONS and text in TRANSLATIONS[lang]:
-        return TRANSLATIONS[lang][text]
+    """Passthrough: no JSON word mapping; translator feature is separate."""
     return text
 
-# Make translation function and languages available in templates
 app.jinja_env.globals.update(_=_)
 app.jinja_env.globals.update(get_locale=get_locale)
 app.jinja_env.globals.update(LANGUAGES=app.config['LANGUAGES'])
 
-# Language switching route
 @app.route('/set_language/<language>')
 def set_language(language=None):
-    if language and language in app.config['LANGUAGES']:
-        session['language'] = language
+    """No-op: word mapping removed; redirect back."""
     return redirect(request.referrer or url_for('index'))
 
 # Create upload directory if it doesn't exist
@@ -632,6 +600,13 @@ def generate_booking_reference():
         if not Booking.query.filter_by(booking_reference=ref).first():
             return ref
 
+def generate_vehicle_booking_reference():
+    """Generate a unique vehicle booking reference"""
+    while True:
+        ref = 'VB' + ''.join(random.choices(string.digits, k=8))
+        if not VehicleBooking.query.filter_by(booking_reference=ref).first():
+            return ref
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -684,10 +659,13 @@ def register():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        username_or_email = request.form['username'].strip()
         password = request.form['password']
         
-        user = User.query.filter_by(username=username).first()
+        # Accept either username or email (form label says "Username or Email")
+        user = User.query.filter(
+            or_(User.username == username_or_email, User.email == username_or_email)
+        ).first()
         
         if user and user.password_hash == password:
             login_user(user)
@@ -3587,6 +3565,22 @@ def init_db():
             db.session.commit()
             print("Superadmin created: username='superadmin', password='admin123'")
 
+        # User for voice/VAPI bookings (watch/ESP32 flow; no web login)
+        vapi_guest = User.query.filter_by(username='vapi_guest').first()
+        if not vapi_guest:
+            vapi_guest = User(
+                username='vapi_guest',
+                email='vapi@tourism.local',
+                password_hash='vapi_voice_booking',
+                first_name='Voice',
+                last_name='Guest',
+                role='user',
+                profile_completed=True
+            )
+            db.session.add(vapi_guest)
+            db.session.commit()
+            print("VAPI guest user created for voice/watch bookings.")
+
 
 # Vehicle Rental Routes
 @app.route('/vehicle-rentals')
@@ -4784,6 +4778,229 @@ def chatbot_create_vehicle_booking():
             'error': str(e)
         }), 500
 
+
+# ----- VAPI webhook (watch/ESP32 -> VAPI -> this app). Bookings can be manual (website) or via voice (VAPI). -----
+def _vapi_webhook_auth():
+    """Optional: require X-VAPI-Secret or Authorization header if VAPI_WEBHOOK_SECRET is set."""
+    secret = os.environ.get('VAPI_WEBHOOK_SECRET')
+    if not secret:
+        return True
+    auth = request.headers.get('X-VAPI-Secret') or request.headers.get('Authorization', '').replace('Bearer ', '')
+    return auth == secret
+
+@app.route('/api/vapi/webhook', methods=['POST'])
+def vapi_webhook():
+    """
+    Webhook for VAPI (voice from watch/ESP32). No login required.
+    Body: { "action": "list_hotels"|"list_vehicles"|"create_hotel_booking"|"create_vehicle_booking"|"get_booking_status", ... }
+    Returns JSON with success, message (for TTS), and optional data.
+    """
+    if not _vapi_webhook_auth():
+        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
+    try:
+        data = request.get_json() or {}
+        action = (data.get('action') or '').strip().lower()
+        if not action:
+            return jsonify({'success': False, 'message': 'Missing action'}), 400
+
+        if action == 'list_hotels':
+            return _vapi_list_hotels(data)
+        if action == 'list_vehicles':
+            return _vapi_list_vehicles(data)
+        if action == 'create_hotel_booking':
+            return _vapi_create_hotel_booking(data)
+        if action == 'create_vehicle_booking':
+            return _vapi_create_vehicle_booking(data)
+        if action == 'get_booking_status':
+            return _vapi_get_booking_status(data)
+        return jsonify({'success': False, 'message': f'Unknown action: {action}'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+def _vapi_list_hotels(data):
+    city = (data.get('city') or '').strip()
+    query = Hotel.query.filter_by(is_approved=True)
+    if city:
+        query = query.filter(Hotel.city.ilike(f'%{city}%'))
+    hotels = query.limit(20).all()
+    out = [{'name': h.name, 'area': h.city} for h in hotels]
+    return jsonify({
+        'success': True,
+        'message': f'Found {len(out)} hotels.' if out else 'No hotels found.',
+        'data': {'hotels': out}
+    })
+
+def _vapi_list_vehicles(data):
+    city = (data.get('city') or '').strip()
+    vehicle_type = (data.get('vehicle_type') or '').strip()
+    query = db.session.query(Vehicle).join(VehicleRental).filter(
+        VehicleRental.is_approved == True,
+        Vehicle.is_active == True
+    )
+    if city:
+        query = query.filter(VehicleRental.city.ilike(f'%{city}%'))
+    if vehicle_type:
+        query = query.filter(Vehicle.vehicle_type.ilike(f'%{vehicle_type}%'))
+    vehicles = query.limit(30).all()
+    out = [{'name': f'{v.make} {v.model}', 'area': v.rental_company.city} for v in vehicles]
+    return jsonify({
+        'success': True,
+        'message': f'Found {len(out)} vehicles.' if out else 'No vehicles found.',
+        'data': {'vehicles': out}
+    })
+
+def _vapi_create_hotel_booking(data):
+    username = (data.get('username') or '').strip()
+    if not username:
+        return jsonify({'success': False, 'message': 'Missing username'}), 400
+    user = User.query.filter_by(username=username).first()
+    if not user or user.role != 'user':
+        return jsonify({'success': False, 'message': 'User not found or cannot book hotels'}), 404
+    hotel_name = (data.get('hotel_name') or '').strip()
+    area = (data.get('area') or data.get('city') or '').strip()
+    check_in_s = data.get('check_in') or data.get('checkin') or ''
+    check_out_s = data.get('check_out') or data.get('checkout') or ''
+    rooms = data.get('rooms', 1)
+    guests = data.get('guests', rooms)
+    if not hotel_name or not check_in_s or not check_out_s:
+        return jsonify({'success': False, 'message': 'Missing hotel_name, check_in/checkin, or check_out/checkout'}), 400
+    query = Hotel.query.filter_by(is_approved=True).filter(Hotel.name.ilike(f'%{hotel_name}%'))
+    if area:
+        query = query.filter(Hotel.city.ilike(f'%{area}%'))
+    hotel = query.first()
+    if not hotel:
+        return jsonify({'success': False, 'message': 'Hotel not found'}), 404
+    try:
+        check_in = datetime.strptime(check_in_s.strip()[:10], '%Y-%m-%d').date()
+        check_out = datetime.strptime(check_out_s.strip()[:10], '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Invalid date format; use YYYY-MM-DD'}), 400
+    if check_out <= check_in:
+        return jsonify({'success': False, 'message': 'Check-out must be after check-in'}), 400
+    rooms, guests = max(1, int(rooms)), max(1, int(guests))
+    overlapping = Booking.query.filter(
+        Booking.hotel_id == hotel.id,
+        Booking.status.in_(['pending', 'confirmed']),
+        Booking.check_in < check_out,
+        Booking.check_out > check_in
+    ).all()
+    total_booked = sum(b.rooms for b in overlapping)
+    available = max(0, (hotel.total_rooms or 0) - total_booked)
+    if rooms > available:
+        return jsonify({'success': False, 'message': f'Only {available} rooms available for these dates'}), 400
+    nights = (check_out - check_in).days
+    total_amount = nights * rooms * hotel.price_per_night
+    special = json.dumps({'source': 'vapi'})
+    ref = generate_booking_reference()
+    booking = Booking(
+        user_id=user.id,
+        hotel_id=hotel.id,
+        room_type_id=None,
+        check_in=check_in,
+        check_out=check_out,
+        rooms=rooms,
+        guests=guests,
+        total_amount=total_amount,
+        special_requests=special,
+        booking_reference=ref,
+        status='confirmed',
+        payment_status='pending'
+    )
+    db.session.add(booking)
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'message': f'Hotel booking confirmed. Reference: {ref}. {hotel.name}, {rooms} room(s), {check_in} to {check_out}.',
+        'data': {'booking_id': booking.id, 'booking_reference': ref}
+    })
+
+def _vapi_create_vehicle_booking(data):
+    username = (data.get('username') or '').strip()
+    if not username:
+        return jsonify({'success': False, 'message': 'Missing username'}), 400
+    user = User.query.filter_by(username=username).first()
+    if not user or user.role != 'user':
+        return jsonify({'success': False, 'message': 'User not found or cannot book vehicles'}), 404
+    vehicle_id = data.get('vehicle_id')
+    rental_company_id = data.get('rental_company_id')
+    pickup_s = data.get('pickup_date')
+    return_s = data.get('return_date')
+    if not vehicle_id or not rental_company_id or not pickup_s or not return_s:
+        return jsonify({'success': False, 'message': 'Missing vehicle_id, rental_company_id, pickup_date, or return_date'}), 400
+    vehicle = Vehicle.query.get(vehicle_id)
+    if not vehicle or vehicle.rental_company_id != int(rental_company_id):
+        return jsonify({'success': False, 'message': 'Vehicle not found'}), 404
+    if not vehicle.rental_company.is_approved:
+        return jsonify({'success': False, 'message': 'Rental company not approved'}), 400
+    try:
+        pickup_date = datetime.strptime(pickup_s, '%Y-%m-%d').date()
+        return_date = datetime.strptime(return_s, '%Y-%m-%d').date()
+    except ValueError:
+        return jsonify({'success': False, 'message': 'Invalid date format; use YYYY-MM-DD'}), 400
+    if return_date < pickup_date:
+        return jsonify({'success': False, 'message': 'Return date must be on or after pickup date'}), 400
+    days = max(1, (return_date - pickup_date).days)
+    total_amount = vehicle.price_per_day * days
+    overlapping = VehicleBooking.query.filter(
+        VehicleBooking.vehicle_id == vehicle_id,
+        VehicleBooking.status.in_(['pending', 'confirmed']),
+        or_(
+            and_(VehicleBooking.pickup_date <= pickup_date, VehicleBooking.return_date > pickup_date),
+            and_(VehicleBooking.pickup_date < return_date, VehicleBooking.return_date >= return_date),
+            and_(VehicleBooking.pickup_date >= pickup_date, VehicleBooking.return_date <= return_date)
+        )
+    ).count()
+    if overlapping >= vehicle.available_vehicles:
+        return jsonify({'success': False, 'message': 'Vehicle not available for selected dates'}), 400
+    special = json.dumps({'source': 'vapi'})
+    ref = generate_vehicle_booking_reference()
+    booking = VehicleBooking(
+        user_id=user.id,
+        rental_company_id=vehicle.rental_company_id,
+        vehicle_id=vehicle.id,
+        pickup_date=pickup_date,
+        return_date=return_date,
+        pickup_time=datetime.strptime('10:00', '%H:%M').time(),
+        return_time=datetime.strptime('18:00', '%H:%M').time(),
+        pickup_location=user.phone or 'Voice booking',
+        return_location=user.phone or 'Voice booking',
+        drivers_license=user.phone or 'VAPI_VOICE',
+        drivers_license_expiry=date.today() + timedelta(days=365),
+        total_amount=total_amount,
+        special_requests=special,
+        booking_reference=ref,
+        status='confirmed'
+    )
+    db.session.add(booking)
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'message': f'Vehicle booking confirmed. Reference: {ref}. {vehicle.make} {vehicle.model}, {pickup_date} to {return_date}.',
+        'data': {'booking_id': booking.id, 'booking_reference': ref}
+    })
+
+def _vapi_get_booking_status(data):
+    ref = (data.get('booking_reference') or '').strip()
+    kind = (data.get('type') or 'hotel').strip().lower()
+    if not ref:
+        return jsonify({'success': False, 'message': 'Missing booking_reference'}), 400
+    if kind == 'vehicle':
+        booking = VehicleBooking.query.filter_by(booking_reference=ref).first()
+        if not booking:
+            return jsonify({'success': False, 'message': 'Booking not found'}), 404
+        return jsonify({
+            'success': True,
+            'message': f'Vehicle booking {ref}: {booking.status}.',
+            'data': {'booking_reference': ref, 'status': booking.status, 'type': 'vehicle'}
+        })
+    booking = Booking.query.filter_by(booking_reference=ref).first()
+    if not booking:
+        return jsonify({'success': False, 'message': 'Booking not found'}), 404
+    return jsonify({
+        'success': True,
+        'message': f'Hotel booking {ref}: {booking.status}.',
+        'data': {'booking_reference': ref, 'status': booking.status, 'type': 'hotel'}
+    })
 
 
 if __name__ == '__main__':

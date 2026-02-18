@@ -21,7 +21,10 @@ from gtts import gTTS
 from geopy.geocoders import Nominatim
 import requests
 from openrouteservice import convert
-import google.generativeai as genai
+try:
+    import google.generativeai as genai
+except Exception:
+    genai = None  # e.g. Python 3.14 + protobuf incompatibility on Render
 from models import db, User, Hotel, Booking, Admin, RoomType, RoomAvailability, Review, Wishlist, VehicleRental, Vehicle, VehicleBooking, VehicleReview, Complaint
 from sqlalchemy import or_, and_
 
@@ -470,11 +473,17 @@ def get_food_recommendations(city):
     return nearest, foods["veg"][:3], foods["nonveg"][:3]
 
 # Gemini AI Configuration
-GEMINI_API_KEY = "AIzaSyDpreWSSGLb7SD6nnJR-zKK0RQB1bY5cRY"
-genai.configure(api_key=GEMINI_API_KEY)
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyDpreWSSGLb7SD6nnJR-zKK0RQB1bY5cRY")
+if genai:
+    try:
+        genai.configure(api_key=GEMINI_API_KEY)
+    except Exception:
+        pass
 
 def get_available_models():
     """Get list of available Gemini models"""
+    if not genai:
+        return ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro']
     try:
         models = genai.list_models()
         available_models = []
@@ -489,6 +498,8 @@ def get_available_models():
 # Location Blog Chatbot Model
 def get_location_blog_info(location):
     """Get comprehensive location information using Gemini AI"""
+    if not genai:
+        return None
     # Try different model names in order of preference
     model_names = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-2.5-flash']
     

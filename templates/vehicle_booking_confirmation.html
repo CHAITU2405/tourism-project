@@ -42,8 +42,14 @@
                             <table class="table table-borderless">
                                 <tr>
                                     <td><strong>Vehicle:</strong></td>
-                                    <td>{{ booking.vehicle.make }} {{ booking.vehicle.model }} ({{ booking.vehicle.year }})</td>
+                                    <td>{{ booking.vehicle.make }} {{ booking.vehicle.model }} ({{ booking.vehicle.year }}){% if booking.quantity|default(1) > 1 %} × {{ booking.quantity|default(1) }}{% endif %}</td>
                                 </tr>
+                                {% if booking.quantity|default(1) > 1 %}
+                                <tr>
+                                    <td><strong>Number of vehicles:</strong></td>
+                                    <td>{{ booking.quantity }}</td>
+                                </tr>
+                                {% endif %}
                                 <tr>
                                     <td><strong>Type:</strong></td>
                                     <td>{{ booking.vehicle.vehicle_type.title() }}</td>

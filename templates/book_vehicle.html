@@ -137,7 +137,17 @@
                                         <strong>Total Vehicles:</strong> {{ vehicle.total_vehicles }}
                                     </div>
                                     <div class="col-md-6">
-                                        <strong>Available:</strong> {{ vehicle.available_vehicles }}
+                                        <strong>Available for your dates:</strong> <span id="available-for-dates">{{ vehicle.total_vehicles }}</span>
+                                        <small class="text-muted d-block">Select pickup & return dates to see actual availability</small>
+                                    </div>
+                                </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-12">
+                                        <label for="num_vehicles" class="form-label"><strong>Number of vehicles required</strong> *</label>
+                                        <select class="form-control" id="num_vehicles" name="num_vehicles" style="max-width: 120px;">
+                                            <option value="1" selected>1</option>
+                                        </select>
+                                        <small class="text-muted">Options update based on selected dates</small>
                                     </div>
                                 </div>
                                 {% if vehicle.features %}
@@ -240,24 +250,65 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const vehicleId = {{ vehicle.id }};
     const pickupDate = document.getElementById('pickup_date');
     const returnDate = document.getElementById('return_date');
     const rentalPeriod = document.getElementById('rental-period');
     const totalAmount = document.getElementById('total-amount');
+    const availableForDatesEl = document.getElementById('available-for-dates');
     const pricePerDay = {{ vehicle.price_per_day }};
     
-    // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     pickupDate.min = today;
     
-    // Set minimum date for license expiry to today
     const licenseExpiry = document.getElementById('drivers_license_expiry');
     if (licenseExpiry) {
         licenseExpiry.min = today;
     }
     returnDate.min = today;
     
+    function updateVehicleAvailability() {
+        const numVehiclesSelect = document.getElementById('num_vehicles');
+        if (!pickupDate.value || !returnDate.value || new Date(returnDate.value) <= new Date(pickupDate.value)) {
+            if (availableForDatesEl) availableForDatesEl.textContent = '{{ vehicle.total_vehicles }}';
+            if (numVehiclesSelect) {
+                numVehiclesSelect.innerHTML = '';
+                for (let i = 1; i <= {{ vehicle.total_vehicles }}; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i;
+                    if (i === 1) opt.selected = true;
+                    numVehiclesSelect.appendChild(opt);
+                }
+            }
+            return;
+        }
+        fetch(`/api/vehicle-availability/${vehicleId}?pickup_date=${encodeURIComponent(pickupDate.value)}&return_date=${encodeURIComponent(returnDate.value)}`)
+            .then(response => response.json())
+            .then(data => {
+                const maxAvail = data.max_available_vehicles != null ? data.max_available_vehicles : 0;
+                if (availableForDatesEl) availableForDatesEl.textContent = maxAvail;
+                if (numVehiclesSelect) {
+                    const currentVal = parseInt(numVehiclesSelect.value) || 1;
+                    numVehiclesSelect.innerHTML = '';
+                    for (let i = 1; i <= Math.max(1, maxAvail); i++) {
+                        const opt = document.createElement('option');
+                        opt.value = i;
+                        opt.textContent = i;
+                        if (i === Math.min(currentVal, maxAvail)) opt.selected = true;
+                        numVehiclesSelect.appendChild(opt);
+                    }
+                }
+                calculateTotal();
+            })
+            .catch(() => {
+                if (availableForDatesEl) availableForDatesEl.textContent = '—';
+            });
+    }
+    
     function calculateTotal() {
+        const numVehiclesSelect = document.getElementById('num_vehicles');
+        const numVehicles = (numVehiclesSelect && parseInt(numVehiclesSelect.value)) || 1;
         if (pickupDate.value && returnDate.value) {
             const pickup = new Date(pickupDate.value);
             const return_d = new Date(returnDate.value);
@@ -265,17 +316,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (return_d > pickup) {
                 const diffTime = Math.abs(return_d - pickup);
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                const total = diffDays * pricePerDay;
+                const total = diffDays * pricePerDay * numVehicles;
                 
-                rentalPeriod.textContent = `${diffDays} day${diffDays > 1 ? 's' : ''}`;
+                rentalPeriod.textContent = `${diffDays} day${diffDays > 1 ? 's' : ''}` + (numVehicles > 1 ? ` × ${numVehicles} vehicle${numVehicles > 1 ? 's' : ''}` : '');
                 totalAmount.textContent = `₹${total}`;
+                updateVehicleAvailability();
             } else {
                 rentalPeriod.textContent = 'Invalid date range';
                 totalAmount.textContent = '₹0';
+                if (availableForDatesEl) availableForDatesEl.textContent = '{{ vehicle.total_vehicles }}';
             }
         } else {
             rentalPeriod.textContent = 'Select dates to see duration';
             totalAmount.textContent = '₹0';
+            if (availableForDatesEl) availableForDatesEl.textContent = '{{ vehicle.total_vehicles }}';
         }
     }
     
@@ -288,6 +342,11 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     returnDate.addEventListener('change', calculateTotal);
+    
+    const numVehiclesSelect = document.getElementById('num_vehicles');
+    if (numVehiclesSelect) numVehiclesSelect.addEventListener('change', calculateTotal);
+    
+    updateVehicleAvailability();
     
     // Location functionality
     function getCurrentLocation(inputField, button) {

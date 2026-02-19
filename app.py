@@ -26,7 +26,7 @@ try:
 except Exception:
     genai = None  # e.g. Python 3.14 + protobuf incompatibility on Render
 from models import db, User, Hotel, Booking, Admin, RoomType, RoomAvailability, Review, Wishlist, VehicleRental, Vehicle, VehicleBooking, VehicleReview, Complaint
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, text
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key-here'
@@ -3265,12 +3265,11 @@ def check_vehicle_availability(vehicle_id):
         min_available = float('inf')
         
         while current_date < return_date:
-            # Count vehicles booked on this specific date
+            # Count vehicle slots booked on this specific date (sum of quantity)
             vehicles_booked_on_date = 0
             for booking in overlapping_bookings:
-                # Check if this booking overlaps with the current date
                 if booking.pickup_date <= current_date < booking.return_date:
-                    vehicles_booked_on_date += 1
+                    vehicles_booked_on_date += getattr(booking, 'quantity', 1)
             
             # Calculate available vehicles for this date
             available_vehicles = max(0, vehicle.total_vehicles - vehicles_booked_on_date)
@@ -3568,6 +3567,11 @@ def init_db():
             db.session.rollback()
             import sys
             print(f"init_db vapi_guest: {e}", file=sys.stderr, flush=True)
+        try:
+            db.session.execute(text('ALTER TABLE vehicle_booking ADD COLUMN quantity INTEGER NOT NULL DEFAULT 1'))
+            db.session.commit()
+        except Exception:
+            db.session.rollback()
 
 
 # Vehicle Rental Routes
@@ -3726,10 +3730,13 @@ def book_vehicle(vehicle_id):
         if days == 0:
             days = 1  # Minimum 1 day
         
-        total_amount = vehicle.price_per_day * days
+        num_vehicles = int(request.form.get('num_vehicles', 1))
+        num_vehicles = max(1, min(num_vehicles, vehicle.total_vehicles))
         
-        # Check vehicle availability
-        overlapping_bookings = VehicleBooking.query.filter(
+        total_amount = vehicle.price_per_day * days * num_vehicles
+        
+        # Check vehicle availability: sum of quantities in overlapping bookings + requested <= total
+        overlapping = VehicleBooking.query.filter(
             VehicleBooking.vehicle_id == vehicle_id,
             VehicleBooking.status.in_(['pending', 'confirmed']),
             or_(
@@ -3746,10 +3753,10 @@ def book_vehicle(vehicle_id):
                     VehicleBooking.return_date <= return_date
                 )
             )
-        ).count()
-        
-        if overlapping_bookings >= vehicle.available_vehicles:
-            flash('Vehicle not available for selected dates', 'error')
+        ).all()
+        slots_booked = sum(getattr(b, 'quantity', 1) for b in overlapping)
+        if slots_booked + num_vehicles > vehicle.total_vehicles:
+            flash('Not enough vehicles available for selected dates', 'error')
             return render_template('book_vehicle.html', vehicle=vehicle, rental=rental)
         
         # Create booking
@@ -3757,6 +3764,7 @@ def book_vehicle(vehicle_id):
             user_id=current_user.id,
             rental_company_id=rental.id,
             vehicle_id=vehicle.id,
+            quantity=num_vehicles,
             pickup_date=pickup_date,
             return_date=return_date,
             pickup_time=pickup_time,
@@ -3767,7 +3775,7 @@ def book_vehicle(vehicle_id):
             drivers_license_expiry=drivers_license_expiry,
             total_amount=total_amount,
             special_requests=special_requests,
-            booking_reference=generate_booking_reference()
+            booking_reference=generate_vehicle_booking_reference()
         )
         
         db.session.add(booking)
@@ -4928,8 +4936,9 @@ def _vapi_create_vehicle_booking(data):
     if return_date < pickup_date:
         return jsonify({'success': False, 'message': 'Return date must be on or after pickup date'}), 400
     days = max(1, (return_date - pickup_date).days)
-    total_amount = vehicle.price_per_day * days
-    overlapping = VehicleBooking.query.filter(
+    num_vehicles = max(1, int(data.get('num_vehicles', 1)))
+    total_amount = vehicle.price_per_day * days * num_vehicles
+    overlapping_list = VehicleBooking.query.filter(
         VehicleBooking.vehicle_id == vehicle_id,
         VehicleBooking.status.in_(['pending', 'confirmed']),
         or_(
@@ -4937,8 +4946,9 @@ def _vapi_create_vehicle_booking(data):
             and_(VehicleBooking.pickup_date < return_date, VehicleBooking.return_date >= return_date),
             and_(VehicleBooking.pickup_date >= pickup_date, VehicleBooking.return_date <= return_date)
         )
-    ).count()
-    if overlapping >= vehicle.available_vehicles:
+    ).all()
+    slots_booked = sum(getattr(b, 'quantity', 1) for b in overlapping_list)
+    if slots_booked + num_vehicles > vehicle.total_vehicles:
         return jsonify({'success': False, 'message': 'Vehicle not available for selected dates'}), 400
     special = json.dumps({'source': 'vapi'})
     ref = generate_vehicle_booking_reference()
@@ -4946,6 +4956,7 @@ def _vapi_create_vehicle_booking(data):
         user_id=user.id,
         rental_company_id=vehicle.rental_company_id,
         vehicle_id=vehicle.id,
+        quantity=num_vehicles,
         pickup_date=pickup_date,
         return_date=return_date,
         pickup_time=datetime.strptime('10:00', '%H:%M').time(),

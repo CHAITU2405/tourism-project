@@ -189,6 +189,7 @@ class VehicleBooking(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     rental_company_id = db.Column(db.Integer, db.ForeignKey('vehicle_rental.id'), nullable=False)
     vehicle_id = db.Column(db.Integer, db.ForeignKey('vehicle.id'), nullable=False)
+    quantity = db.Column(db.Integer, default=1, nullable=False)  # number of vehicles in this booking
     pickup_date = db.Column(db.Date, nullable=False)
     return_date = db.Column(db.Date, nullable=False)
     pickup_time = db.Column(db.Time, nullable=False)

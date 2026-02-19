@@ -86,23 +86,18 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label for="rooms" class="form-label">Number of Rooms *</label>
-                                <select class="form-control" id="rooms" name="rooms" required>
-                                    {% for i in range(1, min(available_rooms + 1, 6)) %}
-                                        <option value="{{ i }}">{{ i }} room{{ 's' if i > 1 else '' }}</option>
-                                    {% endfor %}
-                                </select>
-                                <small class="text-muted">
-                                    <span id="available_rooms">{{ available_rooms }}</span> rooms available
-                                </small>
-                            </div>
-                            <div class="col-md-6 mb-3">
                                 <label for="guests" class="form-label">Number of Guests *</label>
                                 <select class="form-control" id="guests" name="guests" required>
-                                    {% for i in range(1, 11) %}
+                                    {% for i in range(1, min(available_rooms * 2, 11) + 1) %}
                                         <option value="{{ i }}">{{ i }} guest{{ 's' if i > 1 else '' }}</option>
                                     {% endfor %}
                                 </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Number of Rooms</label>
+                                <input type="text" class="form-control" id="rooms_display" readonly disabled value="1">
+                                <input type="hidden" id="rooms" name="rooms" value="1" required>
+                                <small class="text-muted">Based on guests (2 guests per room). <span id="available_rooms">{{ available_rooms }}</span> rooms available</small>
                             </div>
                         </div>
 
@@ -236,56 +231,63 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    const GUESTS_PER_ROOM = 2;
     const checkInInput = document.getElementById('check_in');
     const checkOutInput = document.getElementById('check_out');
-    const roomsSelect = document.getElementById('rooms');
+    const roomsInput = document.getElementById('rooms');
+    const roomsDisplay = document.getElementById('rooms_display');
     const guestsSelect = document.getElementById('guests');
-    const pricePerNight = {{ hotel.price_per_night }};
+    const pricePerNight = {{ hotel.price_per_night or 0 }};
     const hotelId = {{ hotel.id }};
+    let availableRooms = {{ available_rooms }};
     
-    // Set minimum date to today
     const today = new Date().toISOString().split('T')[0];
     checkInInput.setAttribute('min', today);
+    
+    function computeRoomsFromGuests() {
+        const guests = parseInt(guestsSelect.value) || 1;
+        const rooms = Math.min(Math.ceil(guests / GUESTS_PER_ROOM), availableRooms);
+        const capped = Math.max(1, rooms);
+        roomsInput.value = capped;
+        roomsDisplay.value = capped;
+    }
+    
+    function updateGuestDropdownMax() {
+        const maxGuests = Math.min(availableRooms * GUESTS_PER_ROOM, 10);
+        const currentGuests = parseInt(guestsSelect.value) || 1;
+        guestsSelect.innerHTML = '';
+        for (let i = 1; i <= Math.max(1, maxGuests); i++) {
+            const option = document.createElement('option');
+            option.value = i;
+            option.textContent = i + ' guest' + (i > 1 ? 's' : '');
+            if (i === currentGuests) option.selected = true;
+            guestsSelect.appendChild(option);
+        }
+        computeRoomsFromGuests();
+    }
     
     function updateRoomAvailability() {
         const checkIn = checkInInput.value;
         const checkOut = checkOutInput.value;
         
         if (checkIn && checkOut) {
-            // Make AJAX request to check availability
             fetch(`/api/room-availability/${hotelId}?check_in=${checkIn}&check_out=${checkOut}`)
                 .then(response => response.json())
                 .then(data => {
-                    const availableRooms = data.available_rooms;
+                    availableRooms = data.available_rooms;
                     document.getElementById('available_rooms').textContent = availableRooms;
-                    
-                    // Update room options
-                    const roomsSelect = document.getElementById('rooms');
-                    const currentValue = roomsSelect.value;
-                    roomsSelect.innerHTML = '';
-                    
-                    for (let i = 1; i <= Math.min(availableRooms, 6); i++) {
-                        const option = document.createElement('option');
-                        option.value = i;
-                        option.textContent = i + ' room' + (i > 1 ? 's' : '');
-                        if (i == currentValue) option.selected = true;
-                        roomsSelect.appendChild(option);
-                    }
-                    
-                    // Update booking summary
+                    updateGuestDropdownMax();
                     updateBookingSummary();
                 })
-                .catch(error => {
-                    console.error('Error checking room availability:', error);
-                });
+                .catch(error => console.error('Error checking room availability:', error));
         }
     }
     
     function updateBookingSummary() {
         const checkIn = new Date(checkInInput.value);
         const checkOut = new Date(checkOutInput.value);
-        const rooms = parseInt(roomsSelect.value);
-        const guests = parseInt(guestsSelect.value);
+        const rooms = parseInt(roomsInput.value) || 1;
+        const guests = parseInt(guestsSelect.value) || 1;
         
         if (checkIn && checkOut && checkOut > checkIn && rooms > 0) {
             const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
@@ -336,10 +338,12 @@ document.addEventListener('DOMContentLoaded', function() {
         updateRoomAvailability();
     });
     
-    roomsSelect.addEventListener('change', updateBookingSummary);
-    guestsSelect.addEventListener('change', updateBookingSummary);
+    guestsSelect.addEventListener('change', function() {
+        computeRoomsFromGuests();
+        updateBookingSummary();
+    });
     
-    // Initialize with default values
+    updateGuestDropdownMax();
     updateBookingSummary();
     
     // Form validation

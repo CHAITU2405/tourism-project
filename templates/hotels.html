@@ -196,7 +196,12 @@
                                 <div class="mt-auto">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <div>
-                                            <span class="h5 text-primary mb-0">${{ "%.0f"|format(hotel.price_per_night) }}</span>
+                                            {% set room_prices = hotel.room_types|selectattr('is_active')|map(attribute='price_per_night')|list %}
+                                            {% if room_prices %}
+                                                <span class="h5 text-primary mb-0">${{ "%.0f"|format(room_prices|min) }} - ${{ "%.0f"|format(room_prices|max) }}</span>
+                                            {% else %}
+                                                <span class="h5 text-primary mb-0">${{ "%.0f"|format(hotel.price_per_night or 0) }}</span>
+                                            {% endif %}
                                             <small class="text-muted">{{ _('/night') }}</small>
                                         </div>
                                         <div class="text-end">

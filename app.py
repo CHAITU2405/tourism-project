@@ -1584,41 +1584,8 @@ def remove_from_wishlist(hotel_id):
 
 @app.route('/itinerary-generator', methods=['GET', 'POST'])
 def itinerary_generator():
-    """Generate comprehensive travel itineraries with mood-based attractions"""
-    if request.method == 'POST':
-        start_location = request.form.get('start_location', '').strip()
-        end_location = request.form.get('end_location', '').strip()
-        total_time = request.form.get('total_time', '').strip()
-        mood = request.form.get('mood', 'neutral').strip().lower()
-        
-        if not start_location or not end_location or not total_time:
-            flash('Please provide start location, end location, and total available time!', 'error')
-            return render_template('itinerary_generator.html')
-        
-        if mood not in ['relaxed', 'adventurous', 'neutral']:
-            mood = 'neutral'
-        
-        try:
-            total_time_hr = float(total_time)
-        except ValueError:
-            flash('Please enter a valid number for total time!', 'error')
-            return render_template('itinerary_generator.html')
-        
-        # Generate comprehensive itinerary with mood
-        itinerary = generate_comprehensive_itinerary(start_location, end_location, total_time_hr, mood)
-        
-        if 'error' in itinerary:
-            flash(f'Error generating itinerary: {itinerary["error"]}', 'error')
-            return render_template('itinerary_generator.html')
-        
-        return render_template('itinerary_result.html', 
-                             itinerary=itinerary, 
-                             start_location=start_location, 
-                             end_location=end_location,
-                             total_time=total_time,
-                             mood=mood)
-    
-    return render_template('itinerary_generator.html')
+    """Itinerary feature removed; redirect to home."""
+    return redirect(url_for('index'))
 
 def generate_ai_itinerary(city, starting_location, duration, mood, interests):
     """Real AI-powered itinerary generation with exact place names and real-time data"""

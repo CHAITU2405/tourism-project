@@ -39,10 +39,6 @@
                     <i class="fas fa-car me-2"></i>
                     {{ _('Vehicle Rental') }}
                 </button>
-                <button class="chatbot-option-btn" data-service="itinerary">
-                    <i class="fas fa-route me-2"></i>
-                    {{ _('Plan Trip') }}
-                </button>
                 <button class="chatbot-option-btn" data-service="food">
                     <i class="fas fa-utensils me-2"></i>
                     {{ _('Food Recommendations') }}
@@ -419,9 +415,6 @@ class TourismChatbot {
                 break;
             case 'vehicle':
                 this.startVehicleBooking();
-                break;
-            case 'itinerary':
-                window.location.href = '{{ url_for("itinerary_generator") }}';
                 break;
             case 'food':
                 window.location.href = '{{ url_for("food_recommendations") }}';

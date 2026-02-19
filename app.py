@@ -5014,8 +5014,15 @@ def _vapi_get_booking_status(data):
     })
 
 
-if __name__ == '__main__':
+# Run init_db when app is loaded so DB exists under gunicorn (e.g. Render)
+with app.app_context():
     init_db()
+
+@app.route('/favicon.ico')
+def favicon():
+    return '', 204
+
+if __name__ == '__main__':
     app.run(debug=True)
 
 

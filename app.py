@@ -3239,6 +3239,11 @@ def chatbot_create_vehicle_booking():
 
 
 # ----- VAPI webhook (watch/ESP32 -> VAPI -> this app). Bookings can be manual (website) or via voice (VAPI). -----
+@app.route('/api/vapi/health', methods=['GET'])
+def vapi_health():
+    """No auth, no DB. Use this to confirm the server is reachable."""
+    return jsonify({'status': 'ok', 'message': 'VAPI endpoint reachable'})
+
 def _vapi_webhook_auth():
     """Optional: require X-VAPI-Secret or Authorization header if VAPI_WEBHOOK_SECRET is set."""
     secret = os.environ.get('VAPI_WEBHOOK_SECRET')
@@ -3247,20 +3252,34 @@ def _vapi_webhook_auth():
     auth = request.headers.get('X-VAPI-Secret') or request.headers.get('Authorization', '').replace('Bearer ', '')
     return auth == secret
 
-@app.route('/api/vapi/webhook', methods=['POST'])
+@app.route('/api/vapi/webhook', methods=['GET', 'POST'])
 def vapi_webhook():
     """
     Webhook for VAPI (voice from watch/ESP32). No login required.
-    Body: { "action": "list_hotels"|"list_vehicles"|"create_hotel_booking"|"create_vehicle_booking"|"get_booking_status", ... }
+    GET: returns usage info (for checking the URL).
+    POST Body: { "action": "list_hotels"|"list_vehicles"|"create_hotel_booking"|"create_vehicle_booking"|"get_booking_status", ... }
     Returns JSON with success, message (for TTS), and optional data.
     """
+    if request.method == 'GET':
+        return jsonify({
+            'message': 'VAPI webhook. Use POST with JSON body.',
+            'actions': ['list_hotels', 'list_vehicles', 'create_hotel_booking', 'create_vehicle_booking', 'get_booking_status'],
+            'example': {'action': 'list_hotels'}
+        })
     if not _vapi_webhook_auth():
         return jsonify({'success': False, 'message': 'Unauthorized'}), 401
     try:
-        data = request.get_json() or {}
+        raw = request.get_data(as_text=True) or '{}'
+        try:
+            data = json.loads(raw) if raw.strip() else {}
+        except (ValueError, TypeError):
+            data = {}
         action = (data.get('action') or '').strip().lower()
         if not action:
-            return jsonify({'success': False, 'message': 'Missing action'}), 400
+            action = 'list_hotels'  # default: return hotels from DB when webhook is called
+
+        if action == 'ping':
+            return jsonify({'success': True, 'message': 'pong'})
 
         if action == 'list_hotels':
             return _vapi_list_hotels(data)
@@ -3277,17 +3296,21 @@ def vapi_webhook():
         return jsonify({'success': False, 'message': str(e)}), 500
 
 def _vapi_list_hotels(data):
-    city = (data.get('city') or '').strip()
-    query = Hotel.query.filter_by(is_approved=True)
-    if city:
-        query = query.filter(Hotel.city.ilike(f'%{city}%'))
-    hotels = query.limit(20).all()
-    out = [{'name': h.name, 'area': h.city} for h in hotels]
-    return jsonify({
-        'success': True,
-        'message': f'Found {len(out)} hotels.' if out else 'No hotels found.',
-        'data': {'hotels': out}
-    })
+    try:
+        city = (data.get('city') or '').strip()
+        query = Hotel.query
+        if city:
+            query = query.filter(Hotel.city.ilike(f'%{city}%'))
+        hotels = query.order_by(Hotel.name).limit(20).all()
+        out = [{'name': str(h.name), 'area': str(h.city or '')} for h in hotels]
+        names_list = ', '.join(h.name for h in hotels) if hotels else ''
+        message = f'Found {len(out)} hotels: {names_list}.' if out else 'No hotels found.'
+        body = {'success': True, 'message': message, 'data': {'hotels': out}}
+        resp = jsonify(body)
+        resp.headers['Content-Type'] = 'application/json; charset=utf-8'
+        return resp
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error loading hotels: {str(e)}', 'data': {'hotels': []}}), 500
 
 def _vapi_list_vehicles(data):
     city = (data.get('city') or '').strip()

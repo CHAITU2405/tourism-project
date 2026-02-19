@@ -3559,38 +3559,48 @@ def update_vehicle_rental_rating(rental_id):
 # Initialize database and create superadmin
 def init_db():
     with app.app_context():
-        db.create_all()
-        
-        # Create superadmin if not exists
-        superadmin = User.query.filter_by(username='superadmin').first()
-        if not superadmin:
-            superadmin = User(
-                username='superadmin',
-                email='admin@tourism.com',
-                password_hash='admin123',
-                first_name='Super',
-                last_name='Admin',
-                role='superadmin'
-            )
-            db.session.add(superadmin)
-            db.session.commit()
-            print("Superadmin created: username='superadmin', password='admin123'")
-
-        # User for voice/VAPI bookings (watch/ESP32 flow; no web login)
-        vapi_guest = User.query.filter_by(username='vapi_guest').first()
-        if not vapi_guest:
-            vapi_guest = User(
-                username='vapi_guest',
-                email='vapi@tourism.local',
-                password_hash='vapi_voice_booking',
-                first_name='Voice',
-                last_name='Guest',
-                role='user',
-                profile_completed=True
-            )
-            db.session.add(vapi_guest)
-            db.session.commit()
-            print("VAPI guest user created for voice/watch bookings.")
+        try:
+            db.create_all()
+        except Exception as e:
+            import sys
+            print(f"init_db create_all: {e}", file=sys.stderr, flush=True)
+        try:
+            superadmin = User.query.filter_by(username='superadmin').first()
+            if not superadmin:
+                superadmin = User(
+                    username='superadmin',
+                    email='admin@tourism.com',
+                    password_hash=os.environ.get('SUPERADMIN_PASSWORD', 'admin123'),
+                    first_name='Super',
+                    last_name='Admin',
+                    role='superadmin'
+                )
+                db.session.add(superadmin)
+                db.session.commit()
+                import sys
+                print("Superadmin created: username='superadmin', password from env or admin123", file=sys.stderr, flush=True)
+        except Exception as e:
+            db.session.rollback()
+            import sys
+            print(f"init_db superadmin: {e}", file=sys.stderr, flush=True)
+        try:
+            vapi_guest = User.query.filter_by(username='vapi_guest').first()
+            if not vapi_guest:
+                vapi_guest = User(
+                    username='vapi_guest',
+                    email='vapi@tourism.local',
+                    password_hash='vapi_voice_booking',
+                    first_name='Voice',
+                    last_name='Guest',
+                    role='user',
+                    profile_completed=True
+                )
+                db.session.add(vapi_guest)
+                db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            import sys
+            print(f"init_db vapi_guest: {e}", file=sys.stderr, flush=True)
 
 
 # Vehicle Rental Routes
@@ -5017,6 +5027,32 @@ def _vapi_get_booking_status(data):
 # Run init_db when app is loaded so DB exists under gunicorn (e.g. Render)
 with app.app_context():
     init_db()
+
+@app.route('/api/bootstrap-superadmin', methods=['GET', 'POST'])
+def bootstrap_superadmin():
+    """One-time: ensure superadmin exists (e.g. after deploy). Optional ?key= matching BOOTSTRAP_KEY env."""
+    key = os.environ.get('BOOTSTRAP_KEY')
+    if key and request.args.get('key') != key:
+        return jsonify({'error': 'Unauthorized'}), 401
+    try:
+        with app.app_context():
+            u = User.query.filter_by(username='superadmin').first()
+            if u:
+                return jsonify({'ok': True, 'message': 'Superadmin already exists'})
+            u = User(
+                username='superadmin',
+                email='admin@tourism.com',
+                password_hash=os.environ.get('SUPERADMIN_PASSWORD', 'admin123'),
+                first_name='Super',
+                last_name='Admin',
+                role='superadmin'
+            )
+            db.session.add(u)
+            db.session.commit()
+            return jsonify({'ok': True, 'message': 'Superadmin created. Use username superadmin and your SUPERADMIN_PASSWORD (or admin123).'})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @app.route('/favicon.ico')
 def favicon():
